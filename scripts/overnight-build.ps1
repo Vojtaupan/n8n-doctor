@@ -14,7 +14,7 @@ $plan    = 'docs/plans/2026-08-20-n8n-audit-v1.md'
 $branch  = 'build/v1'
 $log     = Join-Path $repo 'build-run.log'
 $status  = Join-Path $repo 'build-status.txt'
-$maxIter = 45
+$maxIter = 12
 $deadline = (Get-Date).Date.AddDays(1).AddHours(8)   # hard stop 08:00 tomorrow
 
 function Write-Log($m) {
@@ -23,6 +23,33 @@ function Write-Log($m) {
 }
 
 Set-Location $repo
+
+# --- Single-instance lock -------------------------------------------------
+# Two runners on one branch would interleave commits. Refuse to start if a
+# live one already holds the lock; take it over if the lock is stale.
+$lockFile = Join-Path $repo '.build-runner.lock'
+if (Test-Path $lockFile) {
+  $held = Get-Content $lockFile -ErrorAction SilentlyContinue
+  if ($held -and (Get-Process -Id $held -ErrorAction SilentlyContinue)) {
+    Write-Log "ABORT: runner already active (pid $held)"
+    exit 0
+  }
+}
+Set-Content -Path $lockFile -Value $PID -Encoding utf8
+
+# --- Keep the machine awake for this run only -----------------------------
+# This box sleeps after 60 min on AC and uses S0 modern standby, which would
+# suspend the build. ES_SYSTEM_REQUIRED holds it off; the assertion dies with
+# this process, so no persistent power-plan change is left behind.
+# Display sleep is deliberately NOT blocked - the screen may switch off.
+Add-Type -Namespace Win32 -Name Power -MemberDefinition @'
+[DllImport("kernel32.dll", SetLastError = true)]
+public static extern uint SetThreadExecutionState(uint esFlags);
+'@
+$ES_CONTINUOUS = [uint32]0x80000000
+$ES_SYSTEM_REQUIRED = [uint32]0x00000001
+[Win32.Power]::SetThreadExecutionState($ES_CONTINUOUS -bor $ES_SYSTEM_REQUIRED) | Out-Null
+
 Write-Log "=== n8n-audit overnight build start ==="
 Write-Log "deadline=$deadline maxIter=$maxIter"
 
@@ -54,7 +81,11 @@ You are running UNATTENDED (headless, no human present) in the n8n-audit reposit
 
 Read the implementation plan at $plan and the spec it references at docs/specs/2026-08-20-n8n-audit-design.md.
 
-Find the FIRST task in the plan whose step checkboxes are not all ticked. Implement ONLY that one task:
+SCOPE LIMIT FOR THIS RUN: only Tasks 1 through 5 (Phase 1 - Foundation) are in scope.
+If every step of Tasks 1-5 is already ticked, print 'FOUNDATION COMPLETE' and exit immediately.
+Do NOT start Task 6 or anything later - the rule set is under review and may change.
+
+Find the FIRST task in Tasks 1-5 whose step checkboxes are not all ticked. Implement ONLY that one task:
   - Follow its steps in order. It is a TDD plan: write the failing test first, watch it fail, then implement.
   - Honour the Global Constraints section. It applies to every task.
   - Rule tasks (6-29) follow the 'Rule Task Protocol' section verbatim, including BOTH fixtures.
@@ -80,8 +111,11 @@ while ($true) {
   if ($fails -ge 3)                { Write-Log 'STOP: 3 consecutive failures'; break }
 
   # Plan complete when no unticked checkbox remains.
-  $remaining = (Select-String -Path (Join-Path $repo $plan) -Pattern '^\s*-\s\[ \]' -AllMatches).Count
-  if ($remaining -eq 0) { Write-Log 'STOP: plan complete - no unticked steps'; break }
+  # Count unticked steps in the foundation phase only (everything before '## Phase 2').
+  $planText = Get-Content (Join-Path $repo $plan) -Raw
+  $foundation = $planText.Substring(0, [Math]::Max(0, $planText.IndexOf('## Phase 2')))
+  $remaining = ([regex]::Matches($foundation, '(?m)^\s*-\s\[ \]')).Count
+  if ($remaining -eq 0) { Write-Log 'STOP: foundation complete'; break }
 
   $iter++
   Write-Log "--- iteration $iter (unticked steps remaining: $remaining) ---"
@@ -106,3 +140,8 @@ $commits = (& git rev-list --count "master..$branch")
 $summary = "DONE iterations=$iter commits=$commits untickedStepsLeft=$remaining branch=$branch"
 Write-Log "=== $summary ==="
 Set-Content -Path $status -Value $summary -Encoding utf8
+
+[Win32.Power]::SetThreadExecutionState($ES_CONTINUOUS) | Out-Null
+Remove-Item $lockFile -Force -ErrorAction SilentlyContinue
+Write-Log 'keep-awake released, lock cleared'
+
