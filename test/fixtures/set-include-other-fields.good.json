@@ -1,0 +1,16 @@
+{
+  "name": "Set include-other-fields correct",
+  "nodes": [
+    {
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "parameters": {
+        "includeOtherFields": true,
+        "options": {},
+        "assignments": { "assignments": [] }
+      }
+    }
+  ],
+  "connections": {}
+}

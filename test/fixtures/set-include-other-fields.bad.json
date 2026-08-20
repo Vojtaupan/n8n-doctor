@@ -1,0 +1,15 @@
+{
+  "name": "Set include-other-fields misplaced",
+  "nodes": [
+    {
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "parameters": {
+        "options": { "includeOtherFields": true },
+        "assignments": { "assignments": [] }
+      }
+    }
+  ],
+  "connections": {}
+}
