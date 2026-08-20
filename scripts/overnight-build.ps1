@@ -46,9 +46,14 @@ Add-Type -Namespace Win32 -Name Power -MemberDefinition @'
 [DllImport("kernel32.dll", SetLastError = true)]
 public static extern uint SetThreadExecutionState(uint esFlags);
 '@
-$ES_CONTINUOUS = [uint32]0x80000000
-$ES_SYSTEM_REQUIRED = [uint32]0x00000001
-[Win32.Power]::SetThreadExecutionState($ES_CONTINUOUS -bor $ES_SYSTEM_REQUIRED) | Out-Null
+# NB: Windows PowerShell 5.1 parses 0x80000000 as a SIGNED Int32 (-2147483648), which
+# cannot cast to uint32. Use the decimal literal, and cast the -bor result explicitly
+# because the bitwise OR of two uint32 promotes to Int64.
+$ES_CONTINUOUS      = [uint32]2147483648   # 0x80000000
+$ES_SYSTEM_REQUIRED = [uint32]1            # 0x00000001
+$awake = [Win32.Power]::SetThreadExecutionState([uint32]($ES_CONTINUOUS -bor $ES_SYSTEM_REQUIRED))
+if ($awake -eq 0) { Write-Log 'WARNING: keep-awake NOT armed - machine may sleep mid-build' }
+else { Write-Log 'keep-awake armed (system stays up, display may sleep)' }
 
 Write-Log "=== n8n-audit overnight build start ==="
 Write-Log "deadline=$deadline maxIter=$maxIter"
