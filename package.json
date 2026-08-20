@@ -1,0 +1,33 @@
+{
+  "name": "n8n-audit",
+  "version": "0.1.0",
+  "description": "Lint n8n workflows for production-readiness defects that schema validators miss",
+  "type": "module",
+  "bin": { "n8n-audit": "./dist/cli.js" },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "docs/rules", "README.md", "LICENSE"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsup src/cli.ts src/index.ts --format esm --dts --clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src test --ext .ts --no-error-on-unmatched-pattern",
+    "typecheck": "tsc --noEmit",
+    "calibrate": "node scripts/calibrate.mjs",
+    "check": "npm run typecheck && npm run lint && npm run test"
+  },
+  "keywords": ["n8n", "lint", "workflow", "automation", "static-analysis", "ci"],
+  "license": "MIT",
+  "dependencies": { "fast-glob": "^3.3.2", "picocolors": "^1.0.1" },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.2",
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  }
+}
