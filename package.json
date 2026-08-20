@@ -1,9 +1,9 @@
 {
-  "name": "n8n-audit",
+  "name": "n8n-lint",
   "version": "0.1.0",
   "description": "Lint n8n workflows for production-readiness defects that schema validators miss",
   "type": "module",
-  "bin": { "n8n-audit": "./dist/cli.js" },
+  "bin": { "n8n-lint": "./dist/cli.js" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": ["dist", "docs/rules", "README.md", "LICENSE"],
