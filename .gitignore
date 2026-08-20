@@ -1,0 +1,14 @@
+# The real-workflow validation corpus is CLIENT WORK. Never commit it.
+corpus/
+corpus-report.json
+
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+*.log
+
+# Overnight build runner artifacts
+build-run.log
+build-status.txt
