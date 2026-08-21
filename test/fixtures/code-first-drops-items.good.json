@@ -1,0 +1,25 @@
+{
+  "name": "Code processes every item",
+  "nodes": [
+    {
+      "name": "Split Out Rows",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "parameters": { "fieldToSplitOut": "rows" }
+    },
+    {
+      "name": "Process Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().map((item) => ({ json: { id: item.json.id } }));"
+      }
+    }
+  ],
+  "connections": {
+    "Split Out Rows": {
+      "main": [[{ "node": "Process Row", "type": "main", "index": 0 }]]
+    }
+  }
+}

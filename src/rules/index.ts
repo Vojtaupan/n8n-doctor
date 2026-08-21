@@ -12,6 +12,7 @@ import { rule as sheetsUrlLiteralSpace } from './sheets-url-literal-space.js';
 import { rule as httpRawBody } from './http-raw-body.js';
 import { rule as mergeCombineAllEmptyInput } from './merge-combine-all-empty-input.js';
 import { rule as mutuallyExclusiveFanIn } from './mutually-exclusive-fan-in.js';
+import { rule as codeFirstDropsItems } from './code-first-drops-items.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -33,4 +34,5 @@ export const rules: Rule[] = [
   httpRawBody,
   mergeCombineAllEmptyInput,
   mutuallyExclusiveFanIn,
+  codeFirstDropsItems,
 ];
