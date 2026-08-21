@@ -1,0 +1,40 @@
+[
+  {
+    "name": "Parent - Order Intake",
+    "nodes": [
+      {
+        "name": "Execute Sub-Workflow",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "parameters": {
+          "workflowId": { "value": "child-abc123", "mode": "id" },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "customerId": "={{ $json.customerId }}",
+              "priority": "={{ $json.priority }}"
+            },
+            "schema": []
+          }
+        }
+      }
+    ],
+    "connections": {}
+  },
+  {
+    "id": "child-abc123",
+    "name": "Child - Process Order",
+    "nodes": [
+      {
+        "name": "When Executed by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "parameters": {
+          "inputSource": "jsonExample",
+          "jsonExample": "{\n  \"customerId\": \"abc123\"\n}"
+        }
+      }
+    ],
+    "connections": {}
+  }
+]

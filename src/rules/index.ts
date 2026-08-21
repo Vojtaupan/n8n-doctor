@@ -16,6 +16,7 @@ import { rule as codeFirstDropsItems } from './code-first-drops-items.js';
 import { rule as pairedItemLineageBroken } from './paired-item-lineage-broken.js';
 import { rule as httpParallelUnbatched } from './http-parallel-unbatched.js';
 import { rule as parallelIfsShouldBeSwitch } from './parallel-ifs-should-be-switch.js';
+import { rule as executeWorkflowInputDropped } from './execute-workflow-input-dropped.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -41,4 +42,5 @@ export const rules: Rule[] = [
   pairedItemLineageBroken,
   httpParallelUnbatched,
   parallelIfsShouldBeSwitch,
+  executeWorkflowInputDropped,
 ];
