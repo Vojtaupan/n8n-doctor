@@ -1,0 +1,34 @@
+{
+  "name": "Mutually exclusive fan-in routed through a Merge",
+  "nodes": [
+    {
+      "name": "Route",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "parameters": {}
+    },
+    {
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "parameters": { "mode": "append" }
+    },
+    {
+      "name": "Handle",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Route": {
+      "main": [
+        [{ "node": "Merge", "type": "main", "index": 0 }],
+        [{ "node": "Merge", "type": "main", "index": 1 }]
+      ]
+    },
+    "Merge": {
+      "main": [[{ "node": "Handle", "type": "main", "index": 0 }]]
+    }
+  }
+}

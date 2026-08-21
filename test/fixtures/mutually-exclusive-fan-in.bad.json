@@ -1,0 +1,25 @@
+{
+  "name": "Mutually exclusive fan-in to a non-merge node",
+  "nodes": [
+    {
+      "name": "Route",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "parameters": {}
+    },
+    {
+      "name": "Handle",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Route": {
+      "main": [
+        [{ "node": "Handle", "type": "main", "index": 0 }],
+        [{ "node": "Handle", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}
