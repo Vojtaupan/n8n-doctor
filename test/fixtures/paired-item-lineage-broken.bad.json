@@ -1,0 +1,34 @@
+{
+  "name": "Paired item lineage broken",
+  "nodes": [
+    {
+      "name": "Expand Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const out = $input.all().map((item) => ({ json: { id: item.json.id } }));\nreturn out;"
+      }
+    },
+    {
+      "name": "Build Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "id",
+              "type": "string",
+              "value": "={{ $('Expand Rows').item.json.id }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Expand Rows": {
+      "main": [[{ "node": "Build Payload", "type": "main", "index": 0 }]]
+    }
+  }
+}

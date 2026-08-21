@@ -13,6 +13,7 @@ import { rule as httpRawBody } from './http-raw-body.js';
 import { rule as mergeCombineAllEmptyInput } from './merge-combine-all-empty-input.js';
 import { rule as mutuallyExclusiveFanIn } from './mutually-exclusive-fan-in.js';
 import { rule as codeFirstDropsItems } from './code-first-drops-items.js';
+import { rule as pairedItemLineageBroken } from './paired-item-lineage-broken.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -35,4 +36,5 @@ export const rules: Rule[] = [
   mergeCombineAllEmptyInput,
   mutuallyExclusiveFanIn,
   codeFirstDropsItems,
+  pairedItemLineageBroken,
 ];
