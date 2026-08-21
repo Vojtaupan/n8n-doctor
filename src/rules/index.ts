@@ -8,6 +8,7 @@ import { rule as executeWorkflowSourceNotDatabase } from './execute-workflow-sou
 import { rule as httpJsonBodyInlineExpression } from './http-json-body-inline-expression.js';
 import { rule as expressionAdjacentCloseBraces } from './expression-adjacent-close-braces.js';
 import { rule as sheetsUserEnteredForData } from './sheets-user-entered-for-data.js';
+import { rule as sheetsUrlLiteralSpace } from './sheets-url-literal-space.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -25,4 +26,5 @@ export const rules: Rule[] = [
   httpJsonBodyInlineExpression,
   expressionAdjacentCloseBraces,
   sheetsUserEnteredForData,
+  sheetsUrlLiteralSpace,
 ];

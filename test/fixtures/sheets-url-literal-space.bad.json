@@ -1,0 +1,15 @@
+{
+  "name": "Sheets read with literal space in tab name",
+  "nodes": [
+    {
+      "name": "Read Range",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/abc123/values/Sheet One!A:Z"
+      }
+    }
+  ],
+  "connections": {}
+}
