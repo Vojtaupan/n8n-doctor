@@ -1,0 +1,15 @@
+{
+  "name": "Execute Workflow from the database source",
+  "nodes": [
+    {
+      "name": "Execute Sub-Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "parameters": {
+        "source": "database",
+        "workflowId": { "value": "abc123", "mode": "id" }
+      }
+    }
+  ],
+  "connections": {}
+}

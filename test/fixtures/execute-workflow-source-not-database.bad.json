@@ -1,0 +1,15 @@
+{
+  "name": "Execute Workflow from a file source",
+  "nodes": [
+    {
+      "name": "Execute Sub-Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "parameters": {
+        "source": "localFile",
+        "workflowPath": "/data/workflows/sub.json"
+      }
+    }
+  ],
+  "connections": {}
+}
