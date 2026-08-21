@@ -1,0 +1,23 @@
+{
+  "name": "Expression with adjacent close braces",
+  "nodes": [
+    {
+      "name": "Build Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "payload",
+              "type": "string",
+              "value": "={{ JSON.stringify({ user: { id: $json.id }}) }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {}
+}
