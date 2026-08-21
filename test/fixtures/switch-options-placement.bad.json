@@ -1,0 +1,30 @@
+{
+  "name": "Switch options misplaced",
+  "nodes": [
+    {
+      "name": "Route",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "a",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "outputKey": "A"
+            }
+          ],
+          "options": { "fallbackOutput": "none" }
+        }
+      }
+    }
+  ],
+  "connections": {}
+}

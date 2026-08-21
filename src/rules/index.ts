@@ -1,5 +1,6 @@
 import type { Rule } from '../types.js';
 import { setIncludeOtherFields } from './set-include-other-fields.js';
+import { rule as switchOptionsPlacement } from './switch-options-placement.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -7,4 +8,4 @@ import { setIncludeOtherFields } from './set-include-other-fields.js';
  *
  * To add a new rule: import it and append it to this array.
  */
-export const rules: Rule[] = [setIncludeOtherFields];
+export const rules: Rule[] = [setIncludeOtherFields, switchOptionsPlacement];
