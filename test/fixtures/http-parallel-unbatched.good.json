@@ -1,0 +1,27 @@
+{
+  "name": "HTTP batches its requests",
+  "nodes": [
+    {
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "parameters": { "batchSize": 1, "options": {} }
+    },
+    {
+      "name": "Call API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "url": "https://api.example.com/items",
+        "options": {
+          "batching": { "batch": { "batchSize": 10, "batchInterval": 1000 } }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Loop Over Items": {
+      "main": [[], [{ "node": "Call API", "type": "main", "index": 0 }]]
+    }
+  }
+}

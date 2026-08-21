@@ -1,0 +1,25 @@
+{
+  "name": "HTTP fires every item in parallel",
+  "nodes": [
+    {
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "parameters": { "batchSize": 1, "options": {} }
+    },
+    {
+      "name": "Call API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "url": "https://api.example.com/items",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Loop Over Items": {
+      "main": [[], [{ "node": "Call API", "type": "main", "index": 0 }]]
+    }
+  }
+}
