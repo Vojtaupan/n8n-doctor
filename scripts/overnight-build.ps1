@@ -110,15 +110,19 @@ Hard rules:
 
 $iter = 0
 $fails = 0
+$waits = 0
 while ($true) {
   if ($iter -ge $maxIter)          { Write-Log "STOP: max iterations ($maxIter)"; break }
   if ((Get-Date) -ge $deadline)    { Write-Log 'STOP: deadline reached'; break }
   if ($fails -ge 3)                { Write-Log 'STOP: 3 consecutive failures'; break }
 
-  # Plan complete when no unticked checkbox remains.
-  # Count unticked steps in the foundation phase only (everything before '## Phase 2').
+  # Count unticked steps in Phase 1 only. NB: cut at '## Rule Task Protocol', NOT at
+  # '## Phase 2' - the protocol section sits between them and its 9 checkboxes are a
+  # reusable TEMPLATE that is never ticked, so cutting at Phase 2 can never reach zero.
   $planText = Get-Content (Join-Path $repo $plan) -Raw
-  $foundation = $planText.Substring(0, [Math]::Max(0, $planText.IndexOf('## Phase 2')))
+  $cut = $planText.IndexOf('## Rule Task Protocol')
+  if ($cut -lt 0) { $cut = $planText.IndexOf('## Phase 2') }
+  $foundation = $planText.Substring(0, [Math]::Max(0, $cut))
   $remaining = ([regex]::Matches($foundation, '(?m)^\s*-\s\[ \]')).Count
   if ($remaining -eq 0) { Write-Log 'STOP: foundation complete'; break }
 
@@ -127,8 +131,24 @@ while ($true) {
   Set-Content -Path $status -Value "RUNNING iteration $iter, $remaining steps left" -Encoding utf8
 
   $before = (& git rev-parse HEAD)
-  & $claude -p $prompt --model opus --dangerously-skip-permissions *>> $log
+  $iterOut = Join-Path $env:TEMP 'n8n-lint-iteration.txt'
+  & $claude -p $prompt --model opus --dangerously-skip-permissions *> $iterOut
   $code = $LASTEXITCODE
+  if (Test-Path $iterOut) { Get-Content $iterOut | Add-Content -Path $log }
+  $iterText = if (Test-Path $iterOut) { Get-Content $iterOut -Raw } else { '' }
+
+  # A usage/session limit is transient. Counting it as a build failure trips the
+  # 3-strike valve and ends the night for no reason - that is exactly what killed
+  # the 2026-08-21 00:26 run. Wait for the window to reopen and retry the same task.
+  if ($iterText -match 'session limit|usage limit|rate limit|resets \d') {
+    $waits++
+    if ($waits -gt 12) { Write-Log 'STOP: usage limit persisted beyond 12 waits'; break }
+    Write-Log "usage limit hit - waiting 15 min (wait $waits/12), NOT counted as a failure"
+    Set-Content -Path $status -Value "WAITING on usage limit (wait $waits/12)" -Encoding utf8
+    Start-Sleep -Seconds 900
+    $iter--
+    continue
+  }
   $after = (& git rev-parse HEAD)
 
   if ($code -eq 0 -and $before -ne $after) {
