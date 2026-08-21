@@ -14,7 +14,7 @@ $plan    = 'docs/plans/2026-08-20-n8n-audit-v1.md'
 $branch  = 'build/v1'
 $log     = Join-Path $repo 'build-run.log'
 $status  = Join-Path $repo 'build-status.txt'
-$maxIter = 12
+$maxIter = 60
 $deadline = (Get-Date).Date.AddDays(1).AddHours(8)   # hard stop 08:00 tomorrow
 
 function Write-Log($m) {
@@ -86,11 +86,12 @@ You are running UNATTENDED (headless, no human present) in the n8n-audit reposit
 
 Read the implementation plan at $plan and the spec it references at docs/specs/2026-08-20-n8n-audit-design.md.
 
-SCOPE LIMIT FOR THIS RUN: only Tasks 1 through 5 (Phase 1 - Foundation) are in scope.
-If every step of Tasks 1-5 is already ticked, print 'FOUNDATION COMPLETE' and exit immediately.
-Do NOT start Task 6 or anything later - the rule set is under review and may change.
+SCOPE LIMIT FOR THIS RUN: Tasks 1 through 23 (Phases 1-4) are in scope.
+Phase 5 (Tasks 24-29, the universal production-readiness rules) is OUT OF SCOPE and must not be
+started - those rules duplicate an existing npm package and are pending a positioning decision.
+If every step of Tasks 1-23 is already ticked, print 'PHASES 1-4 COMPLETE' and exit immediately.
 
-Find the FIRST task in Tasks 1-5 whose step checkboxes are not all ticked. Implement ONLY that one task:
+Find the FIRST task in Tasks 1-23 whose step checkboxes are not all ticked. Implement ONLY that one task:
   - Follow its steps in order. It is a TDD plan: write the failing test first, watch it fail, then implement.
   - Honour the Global Constraints section. It applies to every task.
   - Rule tasks (6-29) follow the 'Rule Task Protocol' section verbatim, including BOTH fixtures.
@@ -120,11 +121,16 @@ while ($true) {
   # '## Phase 2' - the protocol section sits between them and its 9 checkboxes are a
   # reusable TEMPLATE that is never ticked, so cutting at Phase 2 can never reach zero.
   $planText = Get-Content (Join-Path $repo $plan) -Raw
-  $cut = $planText.IndexOf('## Rule Task Protocol')
-  if ($cut -lt 0) { $cut = $planText.IndexOf('## Phase 2') }
-  $foundation = $planText.Substring(0, [Math]::Max(0, $cut))
-  $remaining = ([regex]::Matches($foundation, '(?m)^\s*-\s\[ \]')).Count
-  if ($remaining -eq 0) { Write-Log 'STOP: foundation complete'; break }
+  # In-scope region = everything before Phase 5, MINUS the Rule Task Protocol block
+  # (its 9 checkboxes are a reusable template and are never ticked).
+  $stop = $planText.IndexOf('## Phase 5')
+  if ($stop -lt 0) { $stop = $planText.Length }
+  $scope = $planText.Substring(0, $stop)
+  $pStart = $scope.IndexOf('## Rule Task Protocol')
+  $pEnd   = $scope.IndexOf('## Phase 2')
+  if ($pStart -ge 0 -and $pEnd -gt $pStart) { $scope = $scope.Remove($pStart, $pEnd - $pStart) }
+  $remaining = ([regex]::Matches($scope, '(?m)^\s*-\s\[ \]')).Count
+  if ($remaining -eq 0) { Write-Log 'STOP: Phases 1-4 complete'; break }
 
   $iter++
   Write-Log "--- iteration $iter (unticked steps remaining: $remaining) ---"
