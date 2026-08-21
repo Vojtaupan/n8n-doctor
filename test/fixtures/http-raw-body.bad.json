@@ -1,0 +1,19 @@
+{
+  "name": "HTTP raw body",
+  "nodes": [
+    {
+      "name": "Post Payload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.example.com/ingest",
+        "sendBody": true,
+        "bodyContentType": "raw",
+        "rawContentType": "application/json",
+        "body": "{ \"event\": \"ping\" }"
+      }
+    }
+  ],
+  "connections": {}
+}

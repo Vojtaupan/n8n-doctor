@@ -1,0 +1,18 @@
+{
+  "name": "HTTP structured body",
+  "nodes": [
+    {
+      "name": "Post Payload",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.example.com/ingest",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "bodyParametersJson": "{ \"event\": \"ping\" }"
+      }
+    }
+  ],
+  "connections": {}
+}

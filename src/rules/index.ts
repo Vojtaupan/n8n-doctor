@@ -9,6 +9,7 @@ import { rule as httpJsonBodyInlineExpression } from './http-json-body-inline-ex
 import { rule as expressionAdjacentCloseBraces } from './expression-adjacent-close-braces.js';
 import { rule as sheetsUserEnteredForData } from './sheets-user-entered-for-data.js';
 import { rule as sheetsUrlLiteralSpace } from './sheets-url-literal-space.js';
+import { rule as httpRawBody } from './http-raw-body.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -27,4 +28,5 @@ export const rules: Rule[] = [
   expressionAdjacentCloseBraces,
   sheetsUserEnteredForData,
   sheetsUrlLiteralSpace,
+  httpRawBody,
 ];
