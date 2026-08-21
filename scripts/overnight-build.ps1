@@ -81,40 +81,51 @@ if ($LASTEXITCODE -ne 0) {
   exit 0
 }
 
-$prompt = @"
-You are running UNATTENDED (headless, no human present) in the n8n-audit repository, on branch $branch.
+# NB: the prompt is passed on STDIN, never as an argv parameter. $claude resolves to
+# claude.cmd, a batch shim, and cmd.exe truncates a multi-line argument at the first
+# newline - the worker then received only the opening line, had no task, saw the
+# controller's lock and stood down as an "intruder". Three of those tripped the valve.
+# The here-string is single-quoted so backticks in the text stay literal rather than
+# acting as PowerShell escapes; placeholders are substituted explicitly.
+$promptTemplate = @'
+You are running UNATTENDED (headless, no human present) in the n8n-audit repository, on branch __BRANCH__.
 
-YOU ARE THE BUILD. The runner process that spawned you holds `.build-runner.lock` (containing ITS
-own pid) and has written `build-status.txt` = "RUNNING iteration N". That is YOUR CONTROLLER, not a
-competing agent session. Those two files exist solely to stop a SECOND RUNNER from starting; they
-are never a signal for you to stand down. Do NOT treat them, or the `claude`/`node` processes the
-runner started (they are you), as evidence of a concurrent build. Proceed and do the work.
-Stand down ONLY if you find uncommitted changes in `src/` or `test/` that you did not make.
+YOU ARE THE BUILD. The runner process that spawned you holds .build-runner.lock (containing ITS own
+pid) and has written build-status.txt = "RUNNING iteration N". That is YOUR CONTROLLER, not a
+competing agent session. Those files exist solely to stop a SECOND RUNNER from starting; they are
+never a signal for you to stand down. The claude and node processes started moments ago are YOU.
+Proceed and do the work. Stand down ONLY if you find uncommitted changes in src/ or test/ that you
+did not make yourself.
 
-Read the implementation plan at $plan and the spec it references at docs/specs/2026-08-20-n8n-audit-design.md.
+Read the implementation plan at __PLAN__ and the spec it references at
+docs/specs/2026-08-20-n8n-audit-design.md.
 
 SCOPE LIMIT FOR THIS RUN: Tasks 1 through 23 (Phases 1-4) are in scope.
 Phase 5 (Tasks 24-29, the universal production-readiness rules) is OUT OF SCOPE and must not be
 started - those rules duplicate an existing npm package and are pending a positioning decision.
-If every step of Tasks 1-23 is already ticked, print 'PHASES 1-4 COMPLETE' and exit immediately.
+If every step of Tasks 1-23 is already ticked, print "PHASES 1-4 COMPLETE" and exit immediately.
 
 Find the FIRST task in Tasks 1-23 whose step checkboxes are not all ticked. Implement ONLY that one task:
   - Follow its steps in order. It is a TDD plan: write the failing test first, watch it fail, then implement.
   - Honour the Global Constraints section. It applies to every task.
-  - Rule tasks (6-29) follow the 'Rule Task Protocol' section verbatim, including BOTH fixtures.
-  - Run 'npm run check' before committing. If it fails, fix it. Do not commit failing code.
+  - Rule tasks (6-23) follow the "Rule Task Protocol" section verbatim, including BOTH fixtures.
+  - Run "npm run check" before committing. If it fails, fix it. Do not commit failing code.
   - Commit with the conventional-commit message the task specifies, staging EXPLICIT paths only.
-    Never 'git add .' and never 'git add -A'.
-  - Then tick that task's checkboxes in $plan and commit the plan file.
+    Never "git add ." and never "git add -A".
+  - Then tick that task's checkboxes in __PLAN__ and commit the plan file.
   - Then STOP. Do not start the next task.
 
 Hard rules:
   - Never read, copy, print, or commit anything from corpus/ - it is private client work. It is
     gitignored; keep it that way. Calibration reports counts only, never workflow names.
   - Never touch secrets, .env, or .mcp.json.
-  - Never run 'npm publish', never 'git push', never switch branches, never touch master.
+  - Never run "npm publish", never "git push", never switch branches, never touch master.
   - Make best-judgment decisions per the plan. Do NOT ask questions - nobody is there to answer.
-"@
+'@
+$prompt = $promptTemplate.Replace('__BRANCH__', $branch).Replace('__PLAN__', $plan)
+$promptFile = Join-Path $env:TEMP 'n8n-lint-prompt.txt'
+Set-Content -Path $promptFile -Value $prompt -Encoding utf8
+Write-Log "prompt written to $promptFile ($(($prompt -split "`n").Count) lines)"
 
 $iter = 0
 $fails = 0
@@ -145,7 +156,7 @@ while ($true) {
 
   $before = (& git rev-parse HEAD)
   $iterOut = Join-Path $env:TEMP 'n8n-lint-iteration.txt'
-  & $claude -p $prompt --model opus --dangerously-skip-permissions *> $iterOut
+  Get-Content $promptFile -Raw | & $claude -p --model opus --dangerously-skip-permissions *> $iterOut
   $code = $LASTEXITCODE
   if (Test-Path $iterOut) { Get-Content $iterOut | Add-Content -Path $log }
   $iterText = if (Test-Path $iterOut) { Get-Content $iterOut -Raw } else { '' }
