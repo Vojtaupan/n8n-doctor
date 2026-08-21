@@ -1,0 +1,28 @@
+{
+  "name": "IF using the notTrue operator",
+  "nodes": [
+    {
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.approved }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "notTrue", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    }
+  ],
+  "connections": {}
+}
