@@ -7,6 +7,7 @@ import { rule as executeWorkflowMissingMappingMode } from './execute-workflow-mi
 import { rule as executeWorkflowSourceNotDatabase } from './execute-workflow-source-not-database.js';
 import { rule as httpJsonBodyInlineExpression } from './http-json-body-inline-expression.js';
 import { rule as expressionAdjacentCloseBraces } from './expression-adjacent-close-braces.js';
+import { rule as sheetsUserEnteredForData } from './sheets-user-entered-for-data.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -23,4 +24,5 @@ export const rules: Rule[] = [
   executeWorkflowSourceNotDatabase,
   httpJsonBodyInlineExpression,
   expressionAdjacentCloseBraces,
+  sheetsUserEnteredForData,
 ];
