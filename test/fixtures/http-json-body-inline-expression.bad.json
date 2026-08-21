@@ -1,0 +1,18 @@
+{
+  "name": "HTTP JSON body with inline expression",
+  "nodes": [
+    {
+      "name": "Create User",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.example.com/users",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"userId\": {{ $json.id }}, \"name\": \"{{ $json.name }}\" }"
+      }
+    }
+  ],
+  "connections": {}
+}

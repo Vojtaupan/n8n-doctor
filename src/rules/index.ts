@@ -5,6 +5,7 @@ import { rule as ifV2MissingLeftValue } from './if-v2-missing-left-value.js';
 import { rule as ifNotTrueOperator } from './if-not-true-operator.js';
 import { rule as executeWorkflowMissingMappingMode } from './execute-workflow-missing-mapping-mode.js';
 import { rule as executeWorkflowSourceNotDatabase } from './execute-workflow-source-not-database.js';
+import { rule as httpJsonBodyInlineExpression } from './http-json-body-inline-expression.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -19,4 +20,5 @@ export const rules: Rule[] = [
   ifNotTrueOperator,
   executeWorkflowMissingMappingMode,
   executeWorkflowSourceNotDatabase,
+  httpJsonBodyInlineExpression,
 ];
