@@ -1,0 +1,21 @@
+{
+  "name": "Execute Workflow with mappingMode",
+  "nodes": [
+    {
+      "name": "Execute Sub-Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "parameters": {
+        "workflowId": { "value": "abc123", "mode": "id" },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": { "customerId": "={{ $json.customerId }}" },
+          "schema": [
+            { "id": "customerId", "displayName": "customerId", "type": "string" }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {}
+}

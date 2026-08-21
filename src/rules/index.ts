@@ -3,6 +3,7 @@ import { setIncludeOtherFields } from './set-include-other-fields.js';
 import { rule as switchOptionsPlacement } from './switch-options-placement.js';
 import { rule as ifV2MissingLeftValue } from './if-v2-missing-left-value.js';
 import { rule as ifNotTrueOperator } from './if-not-true-operator.js';
+import { rule as executeWorkflowMissingMappingMode } from './execute-workflow-missing-mapping-mode.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -15,4 +16,5 @@ export const rules: Rule[] = [
   switchOptionsPlacement,
   ifV2MissingLeftValue,
   ifNotTrueOperator,
+  executeWorkflowMissingMappingMode,
 ];
