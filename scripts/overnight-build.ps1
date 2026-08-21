@@ -150,6 +150,19 @@ while ($true) {
   $remaining = ([regex]::Matches($scope, '(?m)^\s*-\s\[ \]')).Count
   if ($remaining -eq 0) { Write-Log 'STOP: Phases 1-4 complete'; break }
 
+  # A worker killed mid-task (usage-limit wait, /End, crash) leaves uncommitted files in
+  # src/ and test/. The worker stand-down rule then fires for EVERY later worker - they
+  # correctly refuse work they did not create - and the build deadlocks permanently.
+  # The runner is single-threaded, so between iterations nothing legitimate is in flight:
+  # anything uncommitted here is abandoned. Stash it (recoverable, unlike reset --hard)
+  # so each worker starts from a clean tree.
+  $dirty = & git status --porcelain
+  if ($dirty) {
+    $n = ($dirty | Measure-Object).Count
+    & git stash push -u -m "abandoned-iteration-$iter" *>> $log
+    Write-Log "stashed $n abandoned file(s) from a killed worker - tree reset to HEAD"
+  }
+
   $iter++
   Write-Log "--- iteration $iter (unticked steps remaining: $remaining) ---"
   Set-Content -Path $status -Value "RUNNING iteration $iter, $remaining steps left" -Encoding utf8
