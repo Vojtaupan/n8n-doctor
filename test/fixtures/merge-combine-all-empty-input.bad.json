@@ -1,0 +1,37 @@
+{
+  "name": "Merge combine-all after IF branch",
+  "nodes": [
+    {
+      "name": "Get Records",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "parameters": {}
+    },
+    {
+      "name": "Route",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "parameters": {}
+    },
+    {
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      }
+    }
+  ],
+  "connections": {
+    "Get Records": {
+      "main": [[{ "node": "Route", "type": "main", "index": 0 }]]
+    },
+    "Route": {
+      "main": [
+        [{ "node": "Merge", "type": "main", "index": 0 }],
+        [{ "node": "Merge", "type": "main", "index": 1 }]
+      ]
+    }
+  }
+}

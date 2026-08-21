@@ -10,6 +10,7 @@ import { rule as expressionAdjacentCloseBraces } from './expression-adjacent-clo
 import { rule as sheetsUserEnteredForData } from './sheets-user-entered-for-data.js';
 import { rule as sheetsUrlLiteralSpace } from './sheets-url-literal-space.js';
 import { rule as httpRawBody } from './http-raw-body.js';
+import { rule as mergeCombineAllEmptyInput } from './merge-combine-all-empty-input.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -29,4 +30,5 @@ export const rules: Rule[] = [
   sheetsUserEnteredForData,
   sheetsUrlLiteralSpace,
   httpRawBody,
+  mergeCombineAllEmptyInput,
 ];
