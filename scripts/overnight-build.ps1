@@ -84,6 +84,13 @@ if ($LASTEXITCODE -ne 0) {
 $prompt = @"
 You are running UNATTENDED (headless, no human present) in the n8n-audit repository, on branch $branch.
 
+YOU ARE THE BUILD. The runner process that spawned you holds `.build-runner.lock` (containing ITS
+own pid) and has written `build-status.txt` = "RUNNING iteration N". That is YOUR CONTROLLER, not a
+competing agent session. Those two files exist solely to stop a SECOND RUNNER from starting; they
+are never a signal for you to stand down. Do NOT treat them, or the `claude`/`node` processes the
+runner started (they are you), as evidence of a concurrent build. Proceed and do the work.
+Stand down ONLY if you find uncommitted changes in `src/` or `test/` that you did not make.
+
 Read the implementation plan at $plan and the spec it references at docs/specs/2026-08-20-n8n-audit-design.md.
 
 SCOPE LIMIT FOR THIS RUN: Tasks 1 through 23 (Phases 1-4) are in scope.
