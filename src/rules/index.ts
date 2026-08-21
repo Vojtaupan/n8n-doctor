@@ -15,6 +15,7 @@ import { rule as mutuallyExclusiveFanIn } from './mutually-exclusive-fan-in.js';
 import { rule as codeFirstDropsItems } from './code-first-drops-items.js';
 import { rule as pairedItemLineageBroken } from './paired-item-lineage-broken.js';
 import { rule as httpParallelUnbatched } from './http-parallel-unbatched.js';
+import { rule as parallelIfsShouldBeSwitch } from './parallel-ifs-should-be-switch.js';
 
 /**
  * The default rule registry. Every rule exported from this module is run by
@@ -39,4 +40,5 @@ export const rules: Rule[] = [
   codeFirstDropsItems,
   pairedItemLineageBroken,
   httpParallelUnbatched,
+  parallelIfsShouldBeSwitch,
 ];

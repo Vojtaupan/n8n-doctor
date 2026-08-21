@@ -1,0 +1,24 @@
+{
+  "name": "Webhook dispatch via a single Switch",
+  "nodes": [
+    { "name": "Webhook", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "parameters": {} },
+    { "name": "Route", "type": "n8n-nodes-base.switch", "typeVersion": 3, "parameters": {} },
+    { "name": "Create", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "parameters": {} },
+    { "name": "Update", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "parameters": {} },
+    { "name": "Delete", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "parameters": {} },
+    { "name": "Archive", "type": "n8n-nodes-base.noOp", "typeVersion": 1, "parameters": {} }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Route", "type": "main", "index": 0 }]]
+    },
+    "Route": {
+      "main": [
+        [{ "node": "Create", "type": "main", "index": 0 }],
+        [{ "node": "Update", "type": "main", "index": 0 }],
+        [{ "node": "Delete", "type": "main", "index": 0 }],
+        [{ "node": "Archive", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}
