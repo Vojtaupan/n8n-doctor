@@ -1,0 +1,18 @@
+{
+  "name": "HTTP JSON body using only quoted interpolation",
+  "nodes": [
+    {
+      "name": "Send Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.example.com/messages",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"to\": \"{{ $json.phone }}\", \"first_name\": \"{{ $json.first_name }}\", \"channel\": \"sms\" }"
+      }
+    }
+  ],
+  "connections": {}
+}
