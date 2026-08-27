@@ -33,7 +33,10 @@ One finding per node, however many places in it are configured that way.
 
 **A write that sets no cell-format option at all.** From `typeVersion 4.1` the
 n8n Sheets node's default *is* `USER_ENTERED`, so those writes have the same
-defect and this rule is silent on them. On the validation corpus that is 149 of
+defect and this rule is silent on them. (That 4.1 boundary is read from n8n's
+source - `cellFormatDefault` - rather than executed against a running instance,
+so it is inferred; two independent readings agreed and 16 corpus nodes are
+consistent with it.) On the validation corpus that is 149 of
 172 write operations - more than the rule reports. This is deliberate for v1 and
 is explained in the limits section of `docs/calibration.md`; the extension is
 the first item in `docs/plans/v1.1-backlog.md`.

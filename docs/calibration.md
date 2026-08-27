@@ -311,6 +311,11 @@ platform default** - n8n's `cellFormatDefault` returns `RAW` below 4.1 and
 `USER_ENTERED` at and above it. A write that sets no cell-format option at all is
 therefore a `USER_ENTERED` write, and the rule does not see it.
 
+**Basis for that version boundary:** it is read from n8n's source, not executed
+against a running instance - two independent readings agreed and 16 corpus nodes
+are consistent with it, but unlike every other number on this page it is inferred
+rather than measured.
+
 In this corpus that is not an edge case. Of **172** Google Sheets write
 operations (`append`, `update`, `appendOrUpdate`), **149 set no cell-format
 option at all, and every one of those 149 is at typeVersion >= 4.1** (61 at 4.5,
