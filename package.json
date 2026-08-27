@@ -9,12 +9,12 @@
   "files": ["dist", "docs/rules", "README.md", "LICENSE"],
   "engines": { "node": ">=20" },
   "scripts": {
-    "build": "tsup src/cli.ts src/index.ts --format esm --dts --clean",
+    "build": "tsup src/cli.ts src/index.ts src/calibrate.ts --format esm --dts --clean",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src test --ext .ts --no-error-on-unmatched-pattern",
     "typecheck": "tsc --noEmit",
-    "calibrate": "node scripts/calibrate.mjs",
+    "calibrate": "npm run build && node scripts/calibrate.mjs",
     "check": "npm run typecheck && npm run lint && npm run test"
   },
   "keywords": ["n8n", "lint", "workflow", "automation", "static-analysis", "ci"],

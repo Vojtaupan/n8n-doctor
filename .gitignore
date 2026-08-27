@@ -13,3 +13,6 @@ dist/
 build-run.log
 build-status.txt
 .build-runner.lock
+
+# Planning/spec scratch from the SDD workflow - not part of the package.
+.superpowers/
