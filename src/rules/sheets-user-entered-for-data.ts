@@ -67,11 +67,7 @@ export const rule: Rule = {
           `timestamps coerce to Sheets dates that no longer round-trip, and leading-zero codes lose ` +
           `their zeros. The write succeeds and the workflow reports success, but the stored data no ` +
           `longer matches what you sent.`,
-        suggestion:
-          `Write RAW instead, so values are stored verbatim exactly as the workflow produced them ` +
-          `(the n8n Google Sheets node calls this option "cellFormat"/"valueInputMode"; the REST API ` +
-          `calls it "valueInputOption"). Use USER_ENTERED only when you deliberately want Sheets to ` +
-          `parse formulas or reformat input.`,
+        suggestion: suggestionFor(graph.shortType(node), node.typeVersion, paths),
       });
     }
 
@@ -88,12 +84,22 @@ const OPTION_KEYS = ['valueInputOption', 'cellFormat', 'valueInputMode'] as cons
 
 /**
  * One of the option names assigned `USER_ENTERED` inside a string. Covers the URL
- * query form (`valueInputOption=USER_ENTERED`) and the JSON form
- * (`"valueInputOption": "USER_ENTERED"`), with either quoting and any spacing.
+ * query form (`valueInputOption=USER_ENTERED`), the JSON form
+ * (`"valueInputOption": "USER_ENTERED"`) and the expression form
+ * (`{ valueInputOption: 'USER_ENTERED' }`), with any spacing.
+ *
+ * Both quote characters are allowed on purpose. An n8n expression body is
+ * JavaScript, so the option is written single-quoted far more often than
+ * double-quoted; an earlier version of this pattern permitted only `"` and
+ * silently missed every expression-built request, which is the dominant form in
+ * practice.
+ *
  * Requiring the assignment is what keeps a passing mention of `USER_ENTERED` from
  * counting as a configured write.
  */
-const ASSIGNED_IN_STRING = new RegExp(`(?:${OPTION_KEYS.join('|')})"?\\s*[=:]\\s*"?USER_ENTERED`);
+const ASSIGNED_IN_STRING = new RegExp(
+  `(?:${OPTION_KEYS.join('|')})["']?\\s*[=:]\\s*["']?USER_ENTERED`,
+);
 
 /**
  * Recursively collect the parameter paths at which this write is configured
@@ -119,6 +125,46 @@ function collectUserEnteredPaths(value: unknown, path: string, out: string[]): v
       collectUserEnteredPaths(v, childPath, out);
     }
   }
+}
+
+/**
+ * Name the option that actually changes the behaviour, which depends on which
+ * node is making the write.
+ *
+ * This is not cosmetic. The n8n Google Sheets node has two generations and they
+ * read different keys: the v1 node uses `valueInputMode`, the v2 node
+ * (`typeVersion >= 4.1`) reads only `cellFormat`. A `valueInputMode` left on a v2
+ * node is **inert** - n8n ignores it and falls back to the version default, which
+ * from 4.1 onward is `USER_ENTERED`. Telling that author to set `valueInputMode`
+ * to RAW would have them change a key that does nothing, watch the data corrupt
+ * anyway, and conclude the linter was wrong.
+ */
+function suggestionFor(shortType: string, typeVersion: number, paths: string[]): string {
+  const tail =
+    ' Use USER_ENTERED only when you deliberately want Sheets to parse formulas or reformat input.';
+
+  if (shortType === 'googleSheets') {
+    if (typeVersion >= 4.1) {
+      const inert = paths.some((p) => p.endsWith('.valueInputMode'))
+        ? ` Note that "valueInputMode" is the v1 node's option name and is ignored at this ` +
+          `typeVersion, so setting it to RAW would change nothing - the version default, ` +
+          `USER_ENTERED from 4.1 onward, would still apply.`
+        : '';
+      return (
+        `Set options.cellFormat to "RAW" so values are stored verbatim, exactly as the workflow ` +
+        `produced them.${inert}${tail}`
+      );
+    }
+    return (
+      `Set options.valueInputMode to "RAW" so values are stored verbatim, exactly as the workflow ` +
+      `produced them.${tail}`
+    );
+  }
+
+  return (
+    `Send valueInputOption=RAW instead, so values are stored verbatim exactly as the workflow ` +
+    `produced them.${tail}`
+  );
 }
 
 function isOptionKey(key: string): boolean {

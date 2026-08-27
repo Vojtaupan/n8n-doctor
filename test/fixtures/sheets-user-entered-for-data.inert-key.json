@@ -1,10 +1,10 @@
 {
-  "name": "Sheets v1 node appending with USER_ENTERED",
+  "name": "Sheets v2 node carrying the inert v1 option name",
   "nodes": [
     {
       "name": "Append Row",
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 2,
+      "typeVersion": 4.7,
       "parameters": {
         "operation": "append",
         "documentId": { "value": "spreadsheet-id-placeholder", "mode": "id" },

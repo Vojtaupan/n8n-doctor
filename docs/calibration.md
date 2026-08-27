@@ -61,7 +61,7 @@ those looked sufficient and were not:
 
 - **Severity cannot tell.** A crash is always downgraded to `info`, so for a rule
   already *declared* `info` a crash and a genuine finding carry the same
-  severity. One registry rule is declared `info`, and it carries 49% of the
+  severity. One registry rule is declared `info`, and it carries 48% of the
   suite's output, so this blind spot sits directly underneath the largest number
   here.
 - **A message marker cannot guarantee.** Keying off the text the engine writes
@@ -139,9 +139,9 @@ Measured on 2026-08-27, over the full corpus, with the thresholds above.
 | workflows scanned | 479 |
 | nodes scanned | 4,412 |
 | rules run | 18 |
-| findings, total | 594 |
+| findings, total | 605 |
 | - `error` | 22 |
-| - `warning` | 280 |
+| - `warning` | 291 |
 | - `info` | 292 |
 | rule crashes | 0 |
 | rules over bound | 0 |
@@ -153,7 +153,7 @@ Per rule, sorted by rate:
 | rule | severity | findings | rate | workflows | verdict |
 | --- | --- | ---: | ---: | ---: | --- |
 | `http-parallel-unbatched` | info | 292 | 6.618% | 144 | OK |
-| `sheets-user-entered-for-data` | warning | 120 | 2.720% | 62 | OK |
+| `sheets-user-entered-for-data` | warning | 131 | 2.969% | 66 | OK |
 | `sheets-url-literal-space` | warning | 63 | 1.428% | 39 | OK |
 | `paired-item-lineage-broken` | warning | 54 | 1.224% | 32 | OK |
 | `execute-workflow-passthrough-ignores-mapping` | warning | 33 | 0.748% | 16 | OK |
@@ -249,7 +249,7 @@ overstates the risk:
 ### `http-parallel-unbatched` - info, 292 findings, 6.618%
 
 Not tight, but load-bearing, and worth naming for the opposite reason. It
-produces **49% of everything the tool reports** (292 of 594) across 144 of 479
+produces **48% of everything the tool reports** (292 of 605) across 144 of 479
 workflows. It passes comfortably at `info`, where it has a 2x margin under the
 13.24% bound by construction. It would fail immediately at `warning` (6.618%
 against 5%) and by an order of magnitude at `error`. **Its severity is
@@ -301,19 +301,53 @@ point, because it is the easiest number here to over-read. A rule scoring 0.453%
 did not get 99.5% of its judgements right. It accused 0.453% of all scanned
 nodes. Its share of the nodes it actually inspects is higher, and unmeasured.
 
-**4. A passing gate is not proof the findings are correct.** The gate bounds
+**4. `sheets-user-entered-for-data` fits inside its bound partly because it
+under-detects.** This one is specific, it is large, and it is the most important
+caveat on this page, so it is not going in a footnote.
+
+The rule fires on a Sheets write that *sets* the cell-format option to
+`USER_ENTERED`. But **from node typeVersion 4.1 onward, `USER_ENTERED` is the
+platform default** - n8n's `cellFormatDefault` returns `RAW` below 4.1 and
+`USER_ENTERED` at and above it. A write that sets no cell-format option at all is
+therefore a `USER_ENTERED` write, and the rule does not see it.
+
+In this corpus that is not an edge case. Of **172** Google Sheets write
+operations (`append`, `update`, `appendOrUpdate`), **149 set no cell-format
+option at all, and every one of those 149 is at typeVersion >= 4.1** (61 at 4.5,
+88 at 4.7). Adding them to the 131 the rule reports gives a true corpus incidence
+of about **280 nodes, 6.346%** - against a `warning` bound of 5%.
+
+**The rule would breach its own bound if it detected its own defect properly.**
+That is stated here rather than acted on, deliberately. Extending it would force
+one of two things: moving the bound to fit the rule, which is precisely the
+anti-pattern this gate exists to prevent, or re-deciding the rule's severity,
+which is a product call and not a calibration one. Neither belongs in a
+measurement pass. It is logged as the first item in
+`docs/plans/v1.1-backlog.md`, with the question that has to be answered before
+any code is written, where it can be decided on its merits.
+
+Two smaller misses in the same rule, for completeness: one corpus node configures
+the option through n8n's structured query-parameter form, where the option name
+is a `name` field rather than a key or a string assignment; and a v2 Sheets node
+that sets the inert `valueInputMode` to `RAW` while relying on the default would
+be a `USER_ENTERED` write that stays silent (no corpus node does this today).
+
+So read this rule's 2.969% as **what it catches, not what is there**. The gate
+bounds noise. It has nothing to say about silence.
+
+**5. A passing gate is not proof the findings are correct.** The gate bounds
 volume. It cannot tell a correct finding from a wrong one, and a rule that is
 wrong quietly - firing rarely and being wrong every time - passes it easily. What
 caught `http-json-body-inline-expression` was volume plus a human reading the
 flagged values. The gate narrows where that reading has to happen; it does not
 replace it.
 
-**5. One corpus, one moment.** 479 workflows from a limited set of sources, and
+**6. One corpus, one moment.** 479 workflows from a limited set of sources, and
 one snapshot in time. n8n's node types version and change shape. A rule that is
 well calibrated today can drift as the platform moves, and the corpus does not
 represent every way people build.
 
-**6. `workflowsAffected` counts distinct workflow names.** Every workflow in this
+**7. `workflowsAffected` counts distinct workflow names.** Every workflow in this
 corpus has a unique name, so the counts above are exact, but the figure would
 undercount if two workflows shared a name. It is reported, never gated.
 
@@ -335,9 +369,9 @@ For each rule below, the deciding measurement is quoted.
 
 | rule | severity | outcome | why |
 | --- | --- | --- | --- |
-| `sheets-user-entered-for-data` | warning | **fix** | Matched only `valueInputOption`, and only as a parameter key - a combination n8n never emits. It was blind to 120 real occurrences of the defect it describes. |
+| `sheets-user-entered-for-data` | warning | **fix** | Matched only `valueInputOption`, and only as a parameter key, double-quoted - a combination n8n never emits. It was blind to 131 real occurrences of the defect it describes. |
 | `execute-workflow-input-dropped` | error | **fix** | Handled only the JSON-example way a sub-workflow declares its inputs. The field-list way whitelists identically, is n8n's default, and is the only one this corpus uses. |
-| `parallel-ifs-should-be-switch` | info | **cut** | Required four parallel IFs on one output; the corpus maximum is one, across 3,971 outputs. It also counted IFs as a proxy for a harm it never checked. |
+| `parallel-ifs-should-be-switch` | info | **cut** | Required four parallel IFs on one output; the corpus maximum is one, across 3,937 outputs carrying an edge. It also counted IFs as a proxy for a harm it never checked. |
 | `switch-options-placement` | error | **keep** | The defect breaks workflow *activation*, so a corpus of running workflows cannot contain it. None of its 35 Switch nodes nest `options` inside `rules`. |
 | `if-v2-missing-left-value` | error | **keep** | The corpus validates the rule's version gate: 212 of 212 IF nodes at typeVersion 2.2+ carry the key; the 26 that lack it are all at 2.0, where it is not required. |
 | `execute-workflow-missing-mapping-mode` | error | **keep** | n8n rejects the node at creation, so the defect never survives into an export. All 71 `workflowInputs` objects carry the key. |
@@ -362,7 +396,7 @@ times in 4,412 nodes**, and could not have appeared, for two independent reasons
   **20** nodes.
 - Calling the Sheets API directly from an HTTP Request node *does* use
   `valueInputOption` - but inside the URL query string or a JSON body, where it
-  is part of a **string value** and never a parameter key. **100** nodes carry it
+  is part of a **string value** and never a parameter key. **111** nodes carry it
   that way.
 
 So a rule written from a real, documented data-corruption bug was structurally
@@ -371,12 +405,33 @@ had been written in the same wrong shape as the matcher. That is the failure mod
 a zero-firing rule is most likely to be hiding, and it is why this audit checks
 fixtures against the platform rather than against the rule.
 
-Fixed to match all three names, as a key or as an assignment inside a string. It
-now reports **120 findings across 62 workflows, 2.720%** - inside the 5% warning
-bound with 1.8x of room. The match deliberately requires the option name and
-`USER_ENTERED` **together**: a further **187** nodes pair the same option with
-`RAW`, which is the correct choice and stays silent, and **12** nodes mention
-`USER_ENTERED` without configuring it, which also stay silent.
+Fixed to match all three names, as a key or as an assignment inside a string,
+with either quote character - an n8n expression body is JavaScript, so the option
+is single-quoted more often than not, and permitting only `"` missed the dominant
+form. It now reports **131 findings across 66 workflows, 2.969%** - inside the 5%
+warning bound with 1.7x of room.
+
+The 120 findings this rule produced before the quote fix were then sampled
+exhaustively against the corpus in review: **all 120 are true positives, and not
+one of them stores a formula** - which is the only shape for which
+`USER_ENTERED` would be the right choice. The 100 HTTP Request findings among
+them are all `sheets.googleapis.com` cell writes (94 `values:append`, 5
+`values/<range>` PUT, 1 `batchUpdate`). The 11 the quote fix added are 6 more
+HTTP Request nodes building the same call in an expression and 5 Code nodes
+assembling the batch payload. **Measured false positives: zero.**
+
+The match requires the option name and `USER_ENTERED` **together**, and that
+discrimination is measured too: **238** nodes assign one of the three option
+names `RAW` - as a key or inside a string, matched symmetrically - and correctly
+stay silent. (That count is nodes that pair the name with `RAW` and do not also
+fire; it includes Code nodes assembling a request payload.)
+
+**What it still misses is the more important number, and it is stated in the
+limits section below.** One node configures the option through n8n's structured
+query-parameter form (`queryParameters.parameters[]`, where the option name is a
+`name` field rather than a key or a string assignment) and is not caught. That is
+small. The large one is the platform default, and it is large enough that it
+changes how this rule's rate should be read.
 
 ### `execute-workflow-input-dropped` - right defect, wrong half of it
 
@@ -408,9 +463,11 @@ underlying trap is real and was observed in production.
 
 It was cut anyway, on three counts:
 
-- **The shape is not near-missing, it is absent.** Across **3,971** node outputs
-  in the corpus, the maximum number of IF nodes on any single output is **one**.
-  Not one output reaches even two, against a threshold of four.
+- **The shape is not near-missing, it is absent.** Across the **3,937** node
+  outputs in the corpus that carry at least one main edge (3,971 output slots
+  exist; 34 are wired to nothing), the maximum number of IF nodes on any single
+  output is **one**. Not one output reaches even two, against a threshold of
+  four.
 - **It did not check the mechanism it described.** The harm comes from the
   non-matching IFs' *false* outputs being wired onward under last-node response
   semantics. The rule inspected neither the false outputs nor the response mode,
@@ -430,14 +487,14 @@ better number than 19 with an unexamined tail.
 | rules in the registry | 19 | 18 |
 | rules with corpus evidence | 11 | 12 |
 | rules that never fired | 8 | 6 |
-| findings, total | 474 | 594 |
+| findings, total | 474 | 605 |
 | - `error` | 22 | 22 |
-| - `warning` | 160 | 280 |
+| - `warning` | 160 | 291 |
 | - `info` | 292 | 292 |
 | gate | PASS | PASS |
 
 Every one of those moves comes from the `sheets-user-entered-for-data` fix, which
-added 120 warnings, and from the cut, which removed a rule contributing nothing.
+added 131 warnings, and from the cut, which removed a rule contributing nothing.
 **No error-severity count moved**, so the headline claim - 22 error findings
 across 479 production workflows - is unchanged, and so is the margin on the rule
 that sits closest to its bound.
@@ -457,6 +514,7 @@ an unreadable corpus.
 The harness prints aggregates only - rule ids, counts, rates, percentages - and
 nothing else. That is a hard constraint on anything added to it.
 
-`docs/calibration-2026-08-27.md` is the raw verbatim output of the run recorded
-here, kept as a dated snapshot. Its threshold table predates the `info` bound;
-this document is the current record.
+`docs/calibration-2026-08-27.md` is the raw verbatim output of the run that
+preceded the zero-firing audit, kept as the dated "before" snapshot. It is
+**superseded**: it reports 19 rules and 474 findings. This document is the
+current record.

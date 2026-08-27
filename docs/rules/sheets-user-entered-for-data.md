@@ -17,14 +17,26 @@ and the rule looks for all three:
 
 It matches the name **either** as a parameter key whose value is exactly
 `USER_ENTERED`, **or** as an assignment inside any parameter string - which is
-where it lands when you call the API directly, either in the URL query
-(`...values:append?valueInputOption=USER_ENTERED`) or in a JSON body.
+where it lands when you call the API directly, in the URL query
+(`...values:append?valueInputOption=USER_ENTERED`), in a JSON body, or in an
+expression that builds one (`{ valueInputOption: 'USER_ENTERED' }`). Either quote
+character counts: expression bodies are JavaScript, so single quotes are the
+common case.
 
 The name and the value have to appear **together**. A node that merely mentions
 `USER_ENTERED` - in a comment, or in a branch that picks between modes - is not
 evidence of a write configured that way, and does not fire. `RAW` never fires.
 
 One finding per node, however many places in it are configured that way.
+
+### What it does not catch
+
+**A write that sets no cell-format option at all.** From `typeVersion 4.1` the
+n8n Sheets node's default *is* `USER_ENTERED`, so those writes have the same
+defect and this rule is silent on them. On the validation corpus that is 149 of
+172 write operations - more than the rule reports. This is deliberate for v1 and
+is explained in the limits section of `docs/calibration.md`; the extension is
+the first item in `docs/plans/v1.1-backlog.md`.
 
 ## Why it matters
 
@@ -100,6 +112,24 @@ Every value written is reinterpreted as if typed by hand.
 Values are stored verbatim. Reach for `USER_ENTERED` only when you deliberately
 want Sheets to evaluate formulas or reformat the input.
 
+### Set the option the node actually reads
+
+The n8n Sheets node has two generations and they read **different keys**. Getting
+this wrong looks like the linter being wrong:
+
+| node `typeVersion` | key that is read | key that is ignored |
+| --- | --- | --- |
+| >= 4.1 (v2 node) | `options.cellFormat` | `options.valueInputMode` |
+| 1 - 2 (v1 node) | `options.valueInputMode` | - |
+
+A `valueInputMode` left on a v2 node is **inert**. Setting it to `RAW` there
+changes nothing: n8n ignores it and falls back to the version default, which from
+4.1 onward is `USER_ENTERED`. The write stays corrupted. Only
+`options.cellFormat: "RAW"` fixes it at `typeVersion >= 4.1`.
+
+The rule's suggestion is version-aware for this reason, and says so explicitly
+when it finds the inert key.
+
 ## How it was found
 
 Distilled from the field notes behind this linter. A workflow appending contact
@@ -114,6 +144,9 @@ The rule then had to be found itself. Its first version searched for the
 parameter **key** `valueInputOption`, which is the REST API's name for the
 option - a key that appears nowhere in 4,412 production nodes and could not,
 because the n8n node uses a different name and the API path carries it inside a
-string rather than as a key. It reported nothing on the entire corpus while 120
-nodes were configured exactly as described above. See the zero-firing audit in
-`docs/calibration.md`.
+string rather than as a key. It reported nothing on the entire corpus while 131
+nodes were configured exactly as described above. A follow-up review found the
+repaired matcher still allowed only double quotes, missing every option written
+in an expression - the dominant form. All 131 findings were then checked by hand
+against the corpus: **zero false positives, and not one of them stores a
+formula.** See the zero-firing audit in `docs/calibration.md`.

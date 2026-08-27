@@ -31,6 +31,26 @@ describe('sheets-user-entered-for-data', () => {
     expect(found).toHaveLength(1);
   });
 
+  // Expression bodies are JavaScript, so the option is single-quoted far more
+  // often than double-quoted. Allowing only double quotes made the matcher miss
+  // the dominant form.
+  it('fires when the assignment is single-quoted inside an expression', () => {
+    const found = runRules(loadFixture('sheets-user-entered-for-data.single-quoted'), [rule]);
+    expect(found).toHaveLength(1);
+  });
+
+  // `valueInputMode` is the v1 Sheets node's option name and is inert on the v2
+  // node (typeVersion >= 4.1), where only `cellFormat` is read. The write is
+  // still USER_ENTERED - the platform default at that version - so the finding
+  // stands, but the suggestion has to name the option that actually fixes it.
+  it('names cellFormat when the inert v1 option is set on a v2 node', () => {
+    const found = runRules(loadFixture('sheets-user-entered-for-data.inert-key'), [rule]);
+    expect(found).toHaveLength(1);
+    expect(found[0]!.suggestion).toContain('options.cellFormat');
+    // The whole point: say that the key already there does nothing.
+    expect(found[0]!.suggestion).toContain('ignored');
+  });
+
   // RAW in every form is the correct choice and must stay silent; so must a node
   // that merely mentions USER_ENTERED without assigning it to the option, which
   // is why the match requires the key and the value together.

@@ -1,10 +1,20 @@
 # Calibration run - 2026-08-27
 
-> **Snapshot, not the current record.** This file is the verbatim output of one
-> run, kept for the record. The durable evidence document is
-> [`calibration.md`](./calibration.md). The threshold table and the `info exempt`
-> line below predate the `info` rate bound added on 2026-08-27; every measured
-> figure here is unchanged and still current.
+> **SUPERSEDED. Historical snapshot - do not cite these figures.** This file is
+> the verbatim output of one run, kept only as the pre-audit record: it is the
+> "before" column of the zero-firing audit in
+> [`calibration.md`](./calibration.md), which is the current and durable
+> evidence document.
+>
+> **Every headline figure below has since moved.** This run predates the
+> zero-firing audit, so it reports 19 rules where there are now 18
+> (`parallel-ifs-should-be-switch` was cut), 474 findings where there are now
+> 605, and `sheets-user-entered-for-data` as never-fired where it now reports
+> 131 findings after a matcher bug was fixed. Its threshold table and the
+> `info exempt` line also predate the `info` rate bound added the same day.
+>
+> Nothing here should be read as a current measurement. Read
+> [`calibration.md`](./calibration.md).
 
 Produced by `npm run calibrate` (`scripts/calibrate.mjs`) over the validation
 corpus of real, in-production n8n workflows.
@@ -112,6 +122,11 @@ Three things the run says that the pass/fail line does not:
    evidence behind it from this corpus. Four of those are `error` severity, three `warning` and one `info`.
    Zero-firing is deliberately not a gate failure, but each one needs a
    verdict: genuinely rare defect, or a rule that cannot fire as written.
+
+   *Resolved after this run.* All eight were adjudicated in the zero-firing
+   audit: five kept, two fixed, one cut. Two of them - including one that
+   "could not fire as written" - turned out to be the second case. See
+   `calibration.md`.
 
 3. **`http-parallel-unbatched` carries 62% of all findings** (292 of 474) and
    fires on 144 of 479 workflows at 6.618% of nodes. It passes only because
