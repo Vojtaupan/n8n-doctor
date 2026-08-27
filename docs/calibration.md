@@ -175,8 +175,8 @@ Per rule, sorted by rate:
 The number to look at is the error line. **The entire rule suite produces 22
 error findings across 479 production workflows** - 0.499% of scanned nodes. The
 three rules that fired at error severity did so on 13, 1 and 1 workflows, so at
-most 15 of the 479 workflows contain an error finding at all: **at least 96.9% of
-the corpus comes back error-clean.** That is a volume a user can work through
+most 15 of the 479 workflows contain an error finding at all: **at least 96.8% of
+the corpus comes back error-clean** (464 of 479). That is a volume a user can work through
 rather than dismiss, which is the whole claim.
 
 The `warning` and `info` tiers are louder on purpose, and are what the severity
@@ -190,7 +190,8 @@ A gate nothing has ever failed is a decoration. This one has a case, and it is
 the reason the bounds are what they are.
 
 `http-json-body-inline-expression` used to produce **164 error findings across 95
-workflows** on this corpus - 166 of the suite's 166 errors, and 3.72% of nodes.
+workflows** on this corpus - 164 of the suite's 166 errors at the time, and
+3.72% of nodes.
 Pulling the flagged values showed they were almost all correct, working code. The
 rule had two wrong premises. It assumed a value starting with `=` must be a
 single expression, so any literal `{` before the first `{{` was a defect, when in
@@ -208,7 +209,7 @@ The relevant part is not that a rule was wrong. It is that **164 mostly-benign
 errors cleared the old flat 5%-of-nodes threshold at 3.72%.** The threshold said
 this was fine. That is what the current bounds are calibrated against: the same
 behaviour now fails the `error` rate bound by more than sevenfold (3.72% against
-0.5%) and breaches the absolute cap by 6.5x (164 against 25). Both failures are
+0.5%) and breaches the absolute cap by more than 6.5x (164 against 25). Both failures are
 encoded as unit tests, so the gate cannot regress back to permitting it.
 
 ---
@@ -273,8 +274,8 @@ the same table for your own material, which is the check that actually matters t
 you, but the 479/4,412 figures here you have to take on the record of them.
 
 **2. Eight of nineteen rules have no corpus evidence at all.** 42% of the
-registry never fired once on 479 real workflows, and **five of the eight are
-`error` severity**. Each has passing unit tests against synthetic fixtures, so
+registry never fired once on 479 real workflows, and **four of the eight are
+`error` severity** - three are `warning` and one is `info`. Each has passing unit tests against synthetic fixtures, so
 they can fire in principle. What is not established is that they fire on real
 workflows, or that they would be right when they did. A rule with no corpus
 evidence has not passed the bar the other eleven passed - it has only avoided

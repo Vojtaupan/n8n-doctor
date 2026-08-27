@@ -109,7 +109,7 @@ Three things the run says that the pass/fail line does not:
    the rule to watch.
 
 2. **Eight of nineteen rules never fired** - 42% of the registry has no
-   evidence behind it from this corpus. Five of those are `error` severity.
+   evidence behind it from this corpus. Four of those are `error` severity, three `warning` and one `info`.
    Zero-firing is deliberately not a gate failure, but each one needs a
    verdict: genuinely rare defect, or a rule that cannot fire as written.
 
