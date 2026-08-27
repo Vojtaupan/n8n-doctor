@@ -158,7 +158,7 @@ async function main() {
     crashes > 0 ? `rule crashes: ${crashes} (excluded from the counts above)` : null,
     '',
     `thresholds: error <= ${pct(DEFAULT_THRESHOLDS.error.maxRate)} of nodes and <= ${DEFAULT_THRESHOLDS.error.maxAbsolute} findings; ` +
-      `warning <= ${pct(DEFAULT_THRESHOLDS.warning.maxRate)}; info exempt`,
+      `warning <= ${pct(DEFAULT_THRESHOLDS.warning.maxRate)}; info <= ${pct(DEFAULT_THRESHOLDS.info.maxRate)}`,
     `rate denominator: total nodes scanned (${totalNodes}), the same for every rule`,
     '',
     renderTable(verdicts, statsById),

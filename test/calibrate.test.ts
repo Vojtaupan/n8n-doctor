@@ -10,6 +10,13 @@ import type { RuleStats } from '../src/calibrate.js';
  */
 const CORPUS_NODES = 4412;
 
+/**
+ * Findings from `http-parallel-unbatched` on that same run - the loudest rule in
+ * the registry and the measurement the `info` bound is calibrated against.
+ * 292 / 4,412 = 6.618% of scanned nodes.
+ */
+const MEASURED_INFO_FINDINGS = 292;
+
 function stat(over: Partial<RuleStats> & Pick<RuleStats, 'ruleId' | 'severity'>): RuleStats {
   return {
     findings: 0,
@@ -90,14 +97,42 @@ describe('evaluateGate', () => {
     expect(result.pass).toBe(true);
   });
 
-  it('exempts info severity from the rate bound entirely', () => {
+  it('passes the loudest advisory rule the corpus actually contains', () => {
+    // The real measurement, pinned. `http-parallel-unbatched` produces 292 of the
+    // corpus run's 474 findings - 62% of everything the tool says - at 6.618% of
+    // scanned nodes, and it is legitimate. The info bound exists to catch a
+    // runaway advisory, not this one, so this rate must keep passing. If a future
+    // bound change flips this test red, the bound moved past real measured data.
+    const stats = [stat({ ruleId: 'i', severity: 'info', findings: MEASURED_INFO_FINDINGS })];
+    const { result, verdict } = verdictFor(stats, 'i');
+
+    expect(verdict.rate).toBeCloseTo(0.06618, 5);
+    expect(verdict.pass).toBe(true);
+    expect(verdict.reason).toBe('ok');
+    expect(result.pass).toBe(true);
+  });
+
+  it('fails an info rule firing on 40% of nodes', () => {
+    // Advisory is not a licence to shout. A rule accusing two nodes in every five
+    // is describing the platform, not the workflow, and burying the 22 errors a
+    // user should actually act on. Severity changes the bound, it does not remove it.
+    const stats = [stat({ ruleId: 'i', severity: 'info', findings: 1765 })];
+    const { result, verdict } = verdictFor(stats, 'i');
+
+    expect(verdict.rate).toBeCloseTo(0.4, 3);
+    expect(verdict.pass).toBe(false);
+    expect(verdict.reason).toBe('rate-exceeded');
+    expect(result.pass).toBe(false);
+  });
+
+  it('fails an info rule firing on half the corpus', () => {
     const stats = [stat({ ruleId: 'i', severity: 'info', findings: 2206 })];
     const { result, verdict } = verdictFor(stats, 'i');
 
     expect(verdict.rate).toBeCloseTo(0.5, 10);
-    expect(verdict.pass).toBe(true);
-    expect(verdict.reason).toBe('ok');
-    expect(result.pass).toBe(true);
+    expect(verdict.pass).toBe(false);
+    expect(verdict.reason).toBe('rate-exceeded');
+    expect(result.pass).toBe(false);
   });
 
   it('does not divide by zero when a rule inspected no nodes', () => {
@@ -188,9 +223,27 @@ describe('DEFAULT_THRESHOLDS', () => {
     expect(DEFAULT_THRESHOLDS.warning.maxAbsolute).toBe(Infinity);
   });
 
-  it('exempts info from both bounds', () => {
-    expect(DEFAULT_THRESHOLDS.info.maxRate).toBe(Infinity);
+  it('bounds info by rate but not in absolute terms', () => {
+    // An advisory count scales with corpus size and costs the user nothing but a
+    // glance, so there is no absolute cap. A share of the corpus is different:
+    // past some fraction an advisory stops being advice and becomes wallpaper.
+    expect(DEFAULT_THRESHOLDS.info.maxRate).toBeLessThan(Infinity);
     expect(DEFAULT_THRESHOLDS.info.maxAbsolute).toBe(Infinity);
+  });
+
+  it('calibrates the info bound against the loudest measured advisory rule', () => {
+    // The bound is derived, not picked: twice the loudest rate the corpus actually
+    // produces. That keeps a 2x margin under the one legitimate noisy rule while
+    // still failing a rule that accuses 40% of nodes. Both ends are asserted so a
+    // future edit cannot quietly slide the bound past either.
+    const measuredRate = MEASURED_INFO_FINDINGS / CORPUS_NODES;
+
+    expect(DEFAULT_THRESHOLDS.info.maxRate).toBeGreaterThanOrEqual(measuredRate * 2);
+    expect(DEFAULT_THRESHOLDS.info.maxRate).toBeLessThan(0.4);
+  });
+
+  it('keeps info looser than warning, as its severity implies', () => {
+    expect(DEFAULT_THRESHOLDS.info.maxRate).toBeGreaterThan(DEFAULT_THRESHOLDS.warning.maxRate);
   });
 
   it('keeps the rate bound and the absolute cap in the same region on this corpus', () => {
@@ -283,6 +336,41 @@ describe('aggregateStats', () => {
     expect(info?.crashes).toBe(1);
     // The crashed workflow is not an "affected" workflow - nothing was found there.
     expect(info?.workflowsAffected).toBe(1);
+  });
+
+  it('counts a genuine info finding that quotes the crash marker as a finding', () => {
+    // The aggregation-level version of the structural-crash point: the counts the
+    // calibration doc publishes must not move because a rule author happened to
+    // start a message with the marker. `crashed: false` is what the engine stamps
+    // on every genuine finding, so the marker in the message is irrelevant here.
+    const stats = aggregateStats(
+      [
+        finding({
+          ruleId: 'an-info',
+          severity: 'info',
+          message: `${RULE_CRASH_PREFIX}is the string this rule warns you about`,
+          crashed: false,
+        }),
+      ],
+      registry,
+      1000,
+    );
+    const info = stats.find((s) => s.ruleId === 'an-info');
+
+    expect(info?.findings).toBe(1);
+    expect(info?.crashes).toBe(0);
+  });
+
+  it('counts a structurally flagged crash even without the message marker', () => {
+    const stats = aggregateStats(
+      [finding({ ruleId: 'an-error', severity: 'info', message: 'no marker here', crashed: true })],
+      registry,
+      1000,
+    );
+    const err = stats.find((s) => s.ruleId === 'an-error');
+
+    expect(err?.findings).toBe(0);
+    expect(err?.crashes).toBe(1);
   });
 
   it('ignores findings from rules outside the given registry', () => {

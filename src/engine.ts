@@ -32,9 +32,18 @@ export const RULE_CRASH_PREFIX = 'Rule check threw an unexpected error: ';
  * Severity alone cannot answer this. A crash is always downgraded to `info`, so
  * for a rule already declared `info` a crash and a genuine finding carry the
  * same severity - comparing the finding's severity to the rule's declared one
- * silently counts the crash as a finding. Key off the marker instead.
+ * silently counts the crash as a finding.
+ *
+ * The answer is the structural `crashed` flag `runRules` stamps on every finding
+ * it emits, true or false. The message marker is only a fallback, for a `Finding`
+ * built before that field existed. It has to be a fallback and not the test: a
+ * rule whose genuine message happened to open with the marker would otherwise
+ * have all of its findings reclassified as crashes, with nothing to catch it -
+ * the same silent-miscount class the info-severity blindness was, relocated into
+ * a string comparison.
  */
 export function isRuleCrash(finding: Finding): boolean {
+  if (finding.crashed !== undefined) return finding.crashed;
   return finding.severity === 'info' && finding.message.startsWith(RULE_CRASH_PREFIX);
 }
 
@@ -62,16 +71,20 @@ export function runRules(ctx: Context, rules: Rule[] = defaultRules): Finding[] 
           workflowName: graph.name,
           message: `${RULE_CRASH_PREFIX}${(err as Error).message ?? String(err)}`,
           suggestion: 'Check the rule implementation or the workflow JSON for unexpected structure.',
+          crashed: true,
         });
         continue;
       }
 
       for (const partial of partialFindings) {
         findings.push({
+          // The engine's fields go after the spread on purpose: `crashed` is the
+          // discriminant the calibration counts rest on, so a rule cannot set it.
           ...partial,
           ruleId: rule.id,
           severity: rule.severity,
           workflowName: graph.name,
+          crashed: false,
         });
       }
     }

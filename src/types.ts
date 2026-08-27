@@ -36,6 +36,18 @@ export interface Finding {
   nodeName?: string;
   message: string;
   suggestion: string;
+  /**
+   * True when the engine synthesized this entry because a rule's `check` threw,
+   * false when a rule genuinely reported it. Set by `runRules`, never by a rule -
+   * `Rule.check` cannot return it.
+   *
+   * Optional, and absent on any `Finding` built before this field existed (a
+   * deserialized older report, say); `isRuleCrash` falls back to the message
+   * marker in that case. Present on everything the current engine emits, which
+   * is what stops a genuine message that happens to open with the marker from
+   * being silently miscounted as a crash.
+   */
+  crashed?: boolean;
 }
 
 export interface Rule {
@@ -44,7 +56,12 @@ export interface Rule {
   title: string;
   /** Relative path to docs/rules/<id>.md */
   docs: string;
-  check(graph: WorkflowGraph, ctx: Context): Omit<Finding, 'ruleId' | 'severity' | 'workflowName'>[];
+  // `crashed` is omitted deliberately: it is the engine's discriminant, so a rule
+  // must not be able to flag its own findings as crashes and vanish from the counts.
+  check(
+    graph: WorkflowGraph,
+    ctx: Context,
+  ): Omit<Finding, 'ruleId' | 'severity' | 'workflowName' | 'crashed'>[];
 }
 
 // Re-exported so rules and the engine can import every shared type from one module.

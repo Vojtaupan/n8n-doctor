@@ -1,5 +1,11 @@
 # Calibration run - 2026-08-27
 
+> **Snapshot, not the current record.** This file is the verbatim output of one
+> run, kept for the record. The durable evidence document is
+> [`calibration.md`](./calibration.md). The threshold table and the `info exempt`
+> line below predate the `info` rate bound added on 2026-08-27; every measured
+> figure here is unchanged and still current.
+
 Produced by `npm run calibrate` (`scripts/calibrate.mjs`) over the validation
 corpus of real, in-production n8n workflows.
 

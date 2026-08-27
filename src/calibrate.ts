@@ -65,13 +65,29 @@ export interface GateResult {
  * corpus the two error bounds bite in the same region: 0.5% is ~22 findings
  * against a cap of 25.
  *
- * `info` is advisory - it asks the user to look, not to act - so it is exempt
- * from both bounds. `warning` keeps the documented 5% rate bound and no cap.
+ * `info` is advisory - it asks the user to look, not to act - so it is bounded
+ * loosely, but it is not exempt. A rule that fires on a large share of every
+ * workflow buries the errors the user is meant to act on no matter what severity
+ * it carries. `warning` keeps the documented 5% rate bound and no cap.
+ *
+ * The `info` bound is derived from the corpus rather than picked: the loudest
+ * legitimate advisory rule measured on it (`http-parallel-unbatched`) fires on
+ * 292 of 4,412 nodes, 6.618%, and is correct to do so. The bound is set at twice
+ * that - 13.24% - which leaves the known-good rule a 2x margin while failing a
+ * runaway rule accusing 40% of nodes, or two in every five. Deriving it this way
+ * ties the number to a measurement: if the corpus changes and 6.618% moves, the
+ * derivation moves with it and the bound gets revisited, where a round 20% would
+ * just quietly accumulate slack.
+ *
+ * `info` gets no absolute cap. The cap on `error` exists because 25 wrong
+ * accusations is 25 wrong accusations whatever the corpus size. An advisory
+ * count carries no such cost and scales with the corpus, so capping it would
+ * only fail the gate for scanning more workflows.
  */
 export const DEFAULT_THRESHOLDS: Thresholds = {
   error: { maxRate: 0.005, maxAbsolute: 25 },
   warning: { maxRate: 0.05, maxAbsolute: Infinity },
-  info: { maxRate: Infinity, maxAbsolute: Infinity },
+  info: { maxRate: 0.1324, maxAbsolute: Infinity },
 };
 
 /**

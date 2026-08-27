@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runRules, orderBySeverity, isRuleCrash, RULE_CRASH_PREFIX } from '../src/engine.js';
-import type { Rule, Severity } from '../src/types.js';
+import type { Finding, Rule, Severity } from '../src/types.js';
 import { loadFixture } from './helpers.js';
 
 describe('engine', () => {
@@ -76,5 +76,74 @@ describe('isRuleCrash', () => {
     ]);
 
     expect(findings[0]!.message.startsWith(RULE_CRASH_PREFIX)).toBe(true);
+  });
+
+  it('marks a synthesized crash structurally, not only in its message', () => {
+    const findings = runRules(loadFixture('set-include-other-fields.good'), [
+      throwingRule('boom', 'error'),
+    ]);
+
+    expect(findings[0]!.crashed).toBe(true);
+  });
+
+  it('does not mistake a genuine info finding that quotes the marker for a crash', () => {
+    // The point of making this structural. A rule author whose message happens to
+    // open with the marker would have every one of their findings silently
+    // reclassified as a crash - vanishing from the totals and inflating the crash
+    // count - and no test anywhere would notice. The discriminant sits underneath
+    // numbers this project publishes, so it cannot be a string match.
+    const findings = runRules(loadFixture('set-include-other-fields.good'), [
+      {
+        id: 'quotes-the-marker',
+        severity: 'info',
+        title: 'quotes the marker in its own message',
+        docs: 'docs/rules/quotes-the-marker.md',
+        check: () => [
+          {
+            message: `${RULE_CRASH_PREFIX}is the string this rule warns you about`,
+            suggestion: 'do not start a message with the crash marker',
+          },
+        ],
+      },
+    ]);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('info');
+    expect(findings[0]!.message.startsWith(RULE_CRASH_PREFIX)).toBe(true);
+    expect(findings[0]!.crashed).toBe(false);
+    expect(isRuleCrash(findings[0]!)).toBe(false);
+  });
+
+  it('cannot be forged by a rule that returns the crash flag itself', () => {
+    // `Rule.check` cannot set `crashed` through the type system; this asserts the
+    // runtime behaviour too, so the field stays engine-owned and a rule can never
+    // hide its own findings from the calibration counts.
+    const findings = runRules(loadFixture('set-include-other-fields.good'), [
+      {
+        id: 'liar',
+        severity: 'warning',
+        title: 'claims to have crashed',
+        docs: 'docs/rules/liar.md',
+        check: () => [{ message: 'a real finding', suggestion: 'fix it', crashed: true } as never],
+      },
+    ]);
+
+    expect(findings[0]!.crashed).toBe(false);
+    expect(isRuleCrash(findings[0]!)).toBe(false);
+  });
+
+  it('still classifies a crash finding built before the structural field existed', () => {
+    // A `Finding` deserialized from an older JSON report has no `crashed` field.
+    // The message marker stays as the fallback so those still classify correctly.
+    const legacy: Finding = {
+      ruleId: 'boom',
+      severity: 'info',
+      workflowName: 'wf',
+      message: `${RULE_CRASH_PREFIX}kaboom`,
+      suggestion: 'Check the rule implementation or the workflow JSON for unexpected structure.',
+    };
+
+    expect(legacy.crashed).toBeUndefined();
+    expect(isRuleCrash(legacy)).toBe(true);
   });
 });
