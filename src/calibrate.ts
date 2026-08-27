@@ -1,4 +1,5 @@
-import type { Severity } from './types.js';
+import type { Finding, Rule, Severity } from './types.js';
+import { isRuleCrash } from './engine.js';
 
 /**
  * Per-rule measurements taken over the validation corpus.
@@ -18,6 +19,8 @@ export interface RuleStats {
   nodesInspected: number;
   /** How many distinct workflows this rule fired on. Reported, not gated. */
   workflowsAffected: number;
+  /** Rule checks that threw. Not findings; reported so a silent breakage shows up. */
+  crashes: number;
 }
 
 /** The bounds one severity has to stay inside. */
@@ -70,6 +73,63 @@ export const DEFAULT_THRESHOLDS: Thresholds = {
   warning: { maxRate: 0.05, maxAbsolute: Infinity },
   info: { maxRate: Infinity, maxAbsolute: Infinity },
 };
+
+/**
+ * Fold a flat finding list into one {@link RuleStats} per registered rule.
+ *
+ * Every rule in `rules` gets an entry, including rules that produced nothing -
+ * a silent rule is a result, not an absence.
+ *
+ * `runRules` turns a thrown rule check into a synthesized `info` finding rather
+ * than letting one malformed workflow kill the run. Those are not defects the
+ * rule found, so they are counted as `crashes` and kept out of `findings`.
+ * Identifying them via {@link isRuleCrash} rather than by comparing severities
+ * is load-bearing: a crash is always downgraded to `info`, so for a rule already
+ * declared `info` a severity comparison cannot see it and the crash inflates
+ * that rule's finding count.
+ *
+ * @param findings every finding from the run, crashes included
+ * @param rules the registry that was run; only these rule ids are counted
+ * @param nodesInspected total nodes scanned - the shared rate denominator
+ */
+export function aggregateStats(
+  findings: readonly Finding[],
+  rules: readonly Pick<Rule, 'id' | 'severity'>[],
+  nodesInspected: number,
+): RuleStats[] {
+  const acc = new Map<string, { stats: RuleStats; workflows: Set<string> }>();
+  for (const rule of rules) {
+    acc.set(rule.id, {
+      stats: {
+        ruleId: rule.id,
+        severity: rule.severity,
+        findings: 0,
+        nodesInspected,
+        workflowsAffected: 0,
+        crashes: 0,
+      },
+      workflows: new Set<string>(),
+    });
+  }
+
+  for (const finding of findings) {
+    const entry = acc.get(finding.ruleId);
+    if (!entry) continue;
+    if (isRuleCrash(finding)) {
+      entry.stats.crashes++;
+      continue;
+    }
+    entry.stats.findings++;
+    // Workflow names are a set key here and are never printed - the corpus is
+    // client work. Distinct names undercount only if two workflows share a name.
+    entry.workflows.add(finding.workflowName);
+  }
+
+  return [...acc.values()].map(({ stats, workflows }) => ({
+    ...stats,
+    workflowsAffected: workflows.size,
+  }));
+}
 
 /**
  * Judge every rule's corpus behaviour against its severity's bounds.

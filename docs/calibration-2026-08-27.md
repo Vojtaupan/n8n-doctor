@@ -30,6 +30,13 @@ inspected, so a per-rule denominator would be invented rather than measured.
 A rule's rate therefore answers "how much of the corpus did this rule accuse",
 not "how often was it wrong about the nodes it looked at".
 
+When a rule check throws, the engine synthesizes a placeholder finding rather
+than letting one malformed workflow kill the run. Those are not defects the rule
+found, so they are counted as crashes and excluded from every number above. This
+run had **0 crashes**. They are identified by the marker the engine writes, not
+by severity: a crash is always downgraded to `info`, so for a rule already
+declared `info` a severity comparison cannot see one.
+
 A rule with zero findings is reported as `never fired`. It is not a gate
 failure - a rule that never fires cannot be a false-positive problem - but it
 does need a separate judgement about whether it is dead weight.

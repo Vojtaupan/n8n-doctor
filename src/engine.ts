@@ -19,6 +19,26 @@ export function orderBySeverity(findings: Finding[]): Finding[] {
 }
 
 /**
+ * The marker `runRules` writes into the finding it synthesizes when a rule's
+ * `check` throws. Exported so consumers can identify a crash without hardcoding
+ * the string: the producer and the test for it stay in this one module.
+ */
+export const RULE_CRASH_PREFIX = 'Rule check threw an unexpected error: ';
+
+/**
+ * True when `finding` is a synthesized rule crash rather than a real defect the
+ * rule detected.
+ *
+ * Severity alone cannot answer this. A crash is always downgraded to `info`, so
+ * for a rule already declared `info` a crash and a genuine finding carry the
+ * same severity - comparing the finding's severity to the rule's declared one
+ * silently counts the crash as a finding. Key off the marker instead.
+ */
+export function isRuleCrash(finding: Finding): boolean {
+  return finding.severity === 'info' && finding.message.startsWith(RULE_CRASH_PREFIX);
+}
+
+/**
  * Run all rules in the registry over every workflow in the context and return
  * a flat, severity-ordered list of findings.
  *
@@ -40,7 +60,7 @@ export function runRules(ctx: Context, rules: Rule[] = defaultRules): Finding[] 
           ruleId: rule.id,
           severity: 'info',
           workflowName: graph.name,
-          message: `Rule check threw an unexpected error: ${(err as Error).message ?? String(err)}`,
+          message: `${RULE_CRASH_PREFIX}${(err as Error).message ?? String(err)}`,
           suggestion: 'Check the rule implementation or the workflow JSON for unexpected structure.',
         });
         continue;

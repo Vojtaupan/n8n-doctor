@@ -18,7 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fg from 'fast-glob';
 import { parseWorkflowFileContents, buildGraph, buildContext, runRules, rules } from '../dist/index.js';
-import { DEFAULT_THRESHOLDS, evaluateGate } from '../dist/calibrate.js';
+import { DEFAULT_THRESHOLDS, aggregateStats, evaluateGate } from '../dist/calibrate.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -67,41 +67,6 @@ async function loadCorpus(dir) {
     }
   }
   return { graphs, files: files.length, skipped };
-}
-
-/**
- * Turn a flat finding list into one {@link RuleStats} per registered rule.
- *
- * `nodesInspected` is the corpus total for every rule: the Rule interface does
- * not report how many nodes it looked at, so a per-rule denominator would be
- * invented. See the note on RuleStats in src/calibrate.ts.
- *
- * The engine converts a thrown rule check into an `info` finding. Those are not
- * real findings, so they are counted separately as crashes and excluded, spotted
- * by the severity not matching the rule's declared one.
- */
-function aggregate(findings, totalNodes) {
-  const byRule = new Map(
-    rules.map((r) => [
-      r.id,
-      { ruleId: r.id, severity: r.severity, findings: 0, nodesInspected: totalNodes, workflowsAffected: 0, crashes: 0, _wf: new Set() },
-    ]),
-  );
-
-  for (const f of findings) {
-    const entry = byRule.get(f.ruleId);
-    if (!entry) continue;
-    if (f.severity !== entry.severity) {
-      entry.crashes++;
-      continue;
-    }
-    entry.findings++;
-    // Workflow names are used only as a set key here and never printed. Distinct
-    // names undercount if two workflows share a name; the corpus has none.
-    entry._wf.add(f.workflowName);
-  }
-
-  return [...byRule.values()].map(({ _wf, ...s }) => ({ ...s, workflowsAffected: _wf.size }));
 }
 
 const RANK = { FAIL: 0, OK: 1, 'never fired': 2 };
@@ -166,7 +131,9 @@ async function main() {
   const ctx = buildContext(graphs);
   const findings = runRules(ctx);
 
-  const stats = aggregate(findings, totalNodes);
+  // aggregateStats lives in src/calibrate.ts so this counting is unit-tested;
+  // it also excludes synthesized rule crashes from the finding counts.
+  const stats = aggregateStats(findings, rules, totalNodes);
   const statsById = new Map(stats.map((s) => [s.ruleId, s]));
   const { pass, verdicts } = evaluateGate(stats, DEFAULT_THRESHOLDS);
 

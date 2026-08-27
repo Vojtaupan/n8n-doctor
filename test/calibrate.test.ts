@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_THRESHOLDS, evaluateGate } from '../src/calibrate.js';
+import { DEFAULT_THRESHOLDS, aggregateStats, evaluateGate } from '../src/calibrate.js';
+import { RULE_CRASH_PREFIX } from '../src/engine.js';
+import type { Finding } from '../src/types.js';
 import type { RuleStats } from '../src/calibrate.js';
 
 /**
@@ -13,6 +15,7 @@ function stat(over: Partial<RuleStats> & Pick<RuleStats, 'ruleId' | 'severity'>)
     findings: 0,
     nodesInspected: CORPUS_NODES,
     workflowsAffected: 0,
+    crashes: 0,
     ...over,
   };
 }
@@ -197,5 +200,109 @@ describe('DEFAULT_THRESHOLDS', () => {
     const rateBoundInFindings = DEFAULT_THRESHOLDS.error.maxRate * CORPUS_NODES;
     expect(rateBoundInFindings).toBeGreaterThan(DEFAULT_THRESHOLDS.error.maxAbsolute * 0.5);
     expect(rateBoundInFindings).toBeLessThan(DEFAULT_THRESHOLDS.error.maxAbsolute * 2);
+  });
+});
+
+describe('aggregateStats', () => {
+  const registry = [
+    { id: 'an-error', severity: 'error' as const },
+    { id: 'a-warning', severity: 'warning' as const },
+    { id: 'an-info', severity: 'info' as const },
+  ];
+
+  function finding(over: Partial<Finding> & Pick<Finding, 'ruleId' | 'severity'>): Finding {
+    return { workflowName: 'wf-1', message: 'a genuine finding', suggestion: 'fix it', ...over };
+  }
+
+  /** A crash finding exactly as `runRules` synthesizes one. */
+  function crash(ruleId: string, workflowName = 'wf-1'): Finding {
+    return {
+      ruleId,
+      severity: 'info',
+      workflowName,
+      message: `${RULE_CRASH_PREFIX}kaboom`,
+      suggestion: 'Check the rule implementation or the workflow JSON for unexpected structure.',
+    };
+  }
+
+  it('returns one entry per registered rule, in registry order, including silent ones', () => {
+    const stats = aggregateStats([], registry, 4412);
+
+    expect(stats.map((s) => s.ruleId)).toEqual(['an-error', 'a-warning', 'an-info']);
+    expect(stats.map((s) => s.severity)).toEqual(['error', 'warning', 'info']);
+    expect(stats.every((s) => s.findings === 0 && s.crashes === 0)).toBe(true);
+  });
+
+  it('gives every rule the same nodesInspected denominator', () => {
+    const stats = aggregateStats([finding({ ruleId: 'an-error', severity: 'error' })], registry, 4412);
+    expect(stats.every((s) => s.nodesInspected === 4412)).toBe(true);
+  });
+
+  it('counts findings and the distinct workflows they came from', () => {
+    const stats = aggregateStats(
+      [
+        finding({ ruleId: 'a-warning', severity: 'warning', workflowName: 'wf-1' }),
+        finding({ ruleId: 'a-warning', severity: 'warning', workflowName: 'wf-1' }),
+        finding({ ruleId: 'a-warning', severity: 'warning', workflowName: 'wf-2' }),
+      ],
+      registry,
+      1000,
+    );
+    const warn = stats.find((s) => s.ruleId === 'a-warning');
+
+    expect(warn?.findings).toBe(3);
+    expect(warn?.workflowsAffected).toBe(2);
+  });
+
+  it('excludes a crash from the findings count and reports it separately', () => {
+    const stats = aggregateStats(
+      [finding({ ruleId: 'an-error', severity: 'error' }), crash('an-error')],
+      registry,
+      1000,
+    );
+    const err = stats.find((s) => s.ruleId === 'an-error');
+
+    expect(err?.findings).toBe(1);
+    expect(err?.crashes).toBe(1);
+    expect(err?.workflowsAffected).toBe(1);
+  });
+
+  it('excludes a crash from an INFO-declared rule too', () => {
+    // The regression. A crash is synthesized as `info`, so comparing the finding's
+    // severity to the rule's declared severity cannot spot a crash in an `info`
+    // rule - it silently inflates that rule's finding count. Two registry rules
+    // are `info`, and one of them carries most of the suite's findings.
+    const stats = aggregateStats(
+      [finding({ ruleId: 'an-info', severity: 'info' }), crash('an-info', 'wf-9')],
+      registry,
+      1000,
+    );
+    const info = stats.find((s) => s.ruleId === 'an-info');
+
+    expect(info?.findings).toBe(1);
+    expect(info?.crashes).toBe(1);
+    // The crashed workflow is not an "affected" workflow - nothing was found there.
+    expect(info?.workflowsAffected).toBe(1);
+  });
+
+  it('ignores findings from rules outside the given registry', () => {
+    const stats = aggregateStats(
+      [finding({ ruleId: 'not-registered', severity: 'error' })],
+      registry,
+      1000,
+    );
+    expect(stats.reduce((sum, s) => sum + s.findings, 0)).toBe(0);
+  });
+
+  it('produces stats that evaluateGate accepts directly', () => {
+    const findings = Array.from({ length: 164 }, (_, i) =>
+      finding({ ruleId: 'an-error', severity: 'error', workflowName: `wf-${i % 95}` }),
+    );
+    const result = evaluateGate(aggregateStats(findings, registry, 4412), DEFAULT_THRESHOLDS);
+    const err = result.verdicts.find((v) => v.ruleId === 'an-error');
+
+    expect(err?.rate).toBeCloseTo(0.0372, 4);
+    expect(err?.reason).toBe('rate-exceeded');
+    expect(result.pass).toBe(false);
   });
 });

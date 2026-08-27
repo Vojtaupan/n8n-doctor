@@ -9,7 +9,7 @@ export type { WorkflowGraph } from './graph.js';
 
 export { buildContext } from './context.js';
 
-export { runRules, orderBySeverity } from './engine.js';
+export { runRules, orderBySeverity, isRuleCrash, RULE_CRASH_PREFIX } from './engine.js';
 export { rules } from './rules/index.js';
 
 export { renderText } from './report/text.js';
