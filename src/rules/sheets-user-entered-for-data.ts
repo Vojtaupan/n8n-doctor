@@ -1,24 +1,47 @@
 import type { Rule, Finding } from '../types.js';
 
 /**
- * Detects a Google Sheets write configured with `valueInputOption: 'USER_ENTERED'`.
+ * Detects a Google Sheets write that stores values as if a person had typed
+ * them, rather than verbatim.
  *
  * The Google Sheets API offers two input modes when you write cells. `RAW`
  * stores each value exactly as sent. `USER_ENTERED` runs every value through the
- * same parser Sheets uses when a person types into a cell — and that parser is
+ * same parser Sheets uses when a person types into a cell - and that parser is
  * lossy for data:
  *
  * - A string beginning with `=` becomes a formula.
- * - A string beginning with `+` (phone numbers like `+14155550123`) is read as
- *   an arithmetic expression and errors or turns into a number.
- * - ISO timestamps and dates coerce to Sheets' own serial date type.
+ * - A string beginning with `+` or `-` (phone numbers like `+1-617-555-0142`) is
+ *   read as an arithmetic expression and evaluates to a number.
+ * - ISO timestamps and dates coerce to Sheets' own serial date type, and read
+ *   back as a locale-formatted display string that no longer round-trips.
  * - Leading-zero codes (zip codes, SKUs like `007`) lose their zeros.
  *
  * The write succeeds, the workflow reports success, and the stored data quietly
- * differs from what the workflow produced. Because `valueInputOption` is the
- * Google Sheets API's own field name, this rule scans for it on any node — the
- * Google Sheets node itself, or an HTTP Request node calling the Sheets API
- * directly — rather than restricting to a single node type.
+ * differs from what the workflow produced.
+ *
+ * ## Why this looks for three key names in two places
+ *
+ * The same setting has three different names depending on how the write is made,
+ * and only one of them is ever a parameter *key*:
+ *
+ * - `cellFormat` - the n8n Google Sheets node at v4.
+ * - `valueInputMode` - the same option on other Google Sheets node versions.
+ * - `valueInputOption` - the Google Sheets REST API's own field name, which is
+ *   what you write when you call the API from an HTTP Request node.
+ *
+ * An earlier version of this rule matched only `valueInputOption`, and only as a
+ * parameter key. That combination cannot occur: the n8n node never uses the API's
+ * field name, and an HTTP Request node carries it inside a **string** - the URL
+ * query (`...values:append?valueInputOption=USER_ENTERED`) or a `jsonBody` - where
+ * it is part of a value and never a key. The rule was therefore structurally
+ * unable to fire, which is exactly what a full corpus run showed. So this scans
+ * for the key both as a parameter key and as an assignment inside any parameter
+ * string.
+ *
+ * Both forms require the key and the value **together**. A node that merely
+ * mentions `USER_ENTERED` somewhere - a comment, a doc string, a branch that
+ * chooses between modes - is not evidence of a write configured that way, and
+ * matching the value alone would flag it.
  */
 export const rule: Rule = {
   id: 'sheets-user-entered-for-data',
@@ -37,17 +60,18 @@ export const rule: Rule = {
       findings.push({
         nodeName: node.name,
         message:
-          `A Google Sheets write sets valueInputOption to "USER_ENTERED" (at ${paths.join(
+          `A Google Sheets write asks for USER_ENTERED input (at ${paths.join(
             ', ',
           )}). Sheets then evaluates every written value as if a person typed it: strings ` +
-          `beginning "=" become formulas, phone numbers beginning "+" become arithmetic, ISO ` +
-          `timestamps coerce to Sheets dates, and leading-zero codes lose their zeros. The write ` +
-          `succeeds and the workflow reports success, but the stored data no longer matches what ` +
-          `you sent.`,
+          `beginning "=" become formulas, phone numbers beginning "+" or "-" become arithmetic, ISO ` +
+          `timestamps coerce to Sheets dates that no longer round-trip, and leading-zero codes lose ` +
+          `their zeros. The write succeeds and the workflow reports success, but the stored data no ` +
+          `longer matches what you sent.`,
         suggestion:
-          `Set valueInputOption to "RAW" so values are stored verbatim, exactly as the workflow ` +
-          `produced them. Use "USER_ENTERED" only when you deliberately want Sheets to parse ` +
-          `formulas or reformat input.`,
+          `Write RAW instead, so values are stored verbatim exactly as the workflow produced them ` +
+          `(the n8n Google Sheets node calls this option "cellFormat"/"valueInputMode"; the REST API ` +
+          `calls it "valueInputOption"). Use USER_ENTERED only when you deliberately want Sheets to ` +
+          `parse formulas or reformat input.`,
       });
     }
 
@@ -56,10 +80,31 @@ export const rule: Rule = {
 };
 
 /**
- * Recursively collect the parameter paths of every `valueInputOption` key whose
- * value is exactly `USER_ENTERED`, wherever it is nested inside the parameters.
+ * The three names this setting goes by. `cellFormat` and `valueInputMode` are
+ * the n8n Google Sheets node's own option names; `valueInputOption` is the
+ * Google Sheets REST API field, used when calling the API directly.
+ */
+const OPTION_KEYS = ['valueInputOption', 'cellFormat', 'valueInputMode'] as const;
+
+/**
+ * One of the option names assigned `USER_ENTERED` inside a string. Covers the URL
+ * query form (`valueInputOption=USER_ENTERED`) and the JSON form
+ * (`"valueInputOption": "USER_ENTERED"`), with either quoting and any spacing.
+ * Requiring the assignment is what keeps a passing mention of `USER_ENTERED` from
+ * counting as a configured write.
+ */
+const ASSIGNED_IN_STRING = new RegExp(`(?:${OPTION_KEYS.join('|')})"?\\s*[=:]\\s*"?USER_ENTERED`);
+
+/**
+ * Recursively collect the parameter paths at which this write is configured
+ * `USER_ENTERED`, in either form: as a parameter key whose value is exactly
+ * `USER_ENTERED`, or as a string that assigns one of the option names that value.
  */
 function collectUserEnteredPaths(value: unknown, path: string, out: string[]): void {
+  if (typeof value === 'string') {
+    if (ASSIGNED_IN_STRING.test(value)) out.push(path);
+    return;
+  }
   if (Array.isArray(value)) {
     value.forEach((v, i) => collectUserEnteredPaths(v, `${path}[${i}]`, out));
     return;
@@ -67,10 +112,17 @@ function collectUserEnteredPaths(value: unknown, path: string, out: string[]): v
   if (isPlainObject(value)) {
     for (const [key, v] of Object.entries(value)) {
       const childPath = `${path}.${key}`;
-      if (key === 'valueInputOption' && v === 'USER_ENTERED') out.push(childPath);
+      if (isOptionKey(key) && v === 'USER_ENTERED') {
+        out.push(childPath);
+        continue; // already recorded; recursing into a string value would double-count
+      }
       collectUserEnteredPaths(v, childPath, out);
     }
   }
+}
+
+function isOptionKey(key: string): boolean {
+  return (OPTION_KEYS as readonly string[]).includes(key);
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

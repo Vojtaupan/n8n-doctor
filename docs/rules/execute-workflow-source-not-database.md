@@ -76,6 +76,10 @@ sub-workflow was later fixed, but the parent kept running the pasted-in original
 because nothing links the two once the JSON is inlined — the bug had been fixed
 "everywhere" except the copy no one remembered was frozen inside the caller.
 
-This signature returned zero hits on the private calibration corpus — the corpus
-belongs to the person who documented and fixed the trap — so the synthetic
-fixture pair is its only coverage.
+This signature returned zero hits on the private calibration corpus, so the
+synthetic fixture pair is its only coverage. The corpus does, though, show the
+rule reaching real data and clearing it: 48 of its 100 Execute Workflow nodes set
+`source` explicitly and **all 48 are `database`** (the other 52 omit the key,
+which defaults to the same thing). A non-database source is a deliberate and
+unusual choice, and this corpus belongs to the person who documented and fixed
+the trap. See the zero-firing audit in `docs/calibration.md`.

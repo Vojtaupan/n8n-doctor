@@ -1,15 +1,15 @@
 {
-  "name": "Sheets append with USER_ENTERED",
+  "name": "Sheets update with cellFormat USER_ENTERED",
   "nodes": [
     {
-      "name": "Append Row",
+      "name": "Update Row",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "parameters": {
-        "operation": "append",
+        "operation": "update",
         "documentId": { "value": "spreadsheet-id-placeholder", "mode": "id" },
         "sheetName": { "value": "Sheet1", "mode": "name" },
-        "options": { "valueInputMode": "USER_ENTERED" }
+        "options": { "cellFormat": "USER_ENTERED" }
       }
     }
   ],

@@ -15,7 +15,6 @@ import { rule as mutuallyExclusiveFanIn } from './mutually-exclusive-fan-in.js';
 import { rule as codeFirstDropsItems } from './code-first-drops-items.js';
 import { rule as pairedItemLineageBroken } from './paired-item-lineage-broken.js';
 import { rule as httpParallelUnbatched } from './http-parallel-unbatched.js';
-import { rule as parallelIfsShouldBeSwitch } from './parallel-ifs-should-be-switch.js';
 import { rule as executeWorkflowInputDropped } from './execute-workflow-input-dropped.js';
 import { rule as executeWorkflowPassthroughIgnoresMapping } from './execute-workflow-passthrough-ignores-mapping.js';
 
@@ -42,7 +41,6 @@ export const rules: Rule[] = [
   codeFirstDropsItems,
   pairedItemLineageBroken,
   httpParallelUnbatched,
-  parallelIfsShouldBeSwitch,
   executeWorkflowInputDropped,
   executeWorkflowPassthroughIgnoresMapping,
 ];

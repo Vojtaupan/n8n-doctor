@@ -1,17 +1,43 @@
 {
-  "name": "Sheets write with RAW",
+  "name": "Sheets writes that store values verbatim",
   "nodes": [
     {
       "name": "Append Row",
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "typeVersion": 4.7,
       "parameters": {
         "operation": "append",
-        "documentId": { "value": "abc123", "mode": "id" },
+        "documentId": { "value": "spreadsheet-id-placeholder", "mode": "id" },
         "sheetName": { "value": "Sheet1", "mode": "name" },
-        "options": {
-          "valueInputOption": "RAW"
-        }
+        "options": { "valueInputMode": "RAW" }
+      }
+    },
+    {
+      "name": "Update Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "parameters": {
+        "operation": "update",
+        "documentId": { "value": "spreadsheet-id-placeholder", "mode": "id" },
+        "sheetName": { "value": "Sheet1", "mode": "name" },
+        "options": { "cellFormat": "RAW" }
+      }
+    },
+    {
+      "name": "Append Via API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/spreadsheet-id-placeholder/values/Sheet1!A:D:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS"
+      }
+    },
+    {
+      "name": "Build Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "// Sheets would reinterpret these under USER_ENTERED, so the caller sends RAW.\nreturn items;"
       }
     }
   ],

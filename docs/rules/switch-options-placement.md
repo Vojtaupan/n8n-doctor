@@ -66,3 +66,13 @@ Distilled from the field notes behind this linter: a Switch node whose `options`
 had drifted inside `rules` during manual JSON surgery refused to activate, and the
 `propertyValues` error named neither the node nor the offending key. The fix was a
 one-line move; finding it was not.
+
+This rule reports **zero** findings on the 479-workflow calibration corpus, and
+the reason is structural rather than reassuring: the defect breaks workflow
+*activation*, so a workflow carrying it never reaches a running state and cannot
+appear in an export of working workflows. Of the 35 Switch nodes in that corpus,
+32 set `options` at the `parameters` root and 3 omit it entirely; **none** nest it
+inside `rules`. The
+rule's audience is JSON assembled outside the editor, before it is posted to n8n
+- which is exactly where the defect is written. See the zero-firing audit in
+`docs/calibration.md`.

@@ -90,8 +90,12 @@ item on every run.
 
 Distilled from the field notes behind this linter.
 
-This rule fired **zero** times across the 479-workflow production corpus — but not
+This rule fired **zero** times across the 479-workflow production corpus - but not
 because the trap is rare. The corpus belongs to the same person who documented this
-defect and had already fixed every instance of it. Its only coverage is therefore the
-synthetic fixture pair, which is why that pair is written to exercise the exact shape:
-both branches of a single IF feeding a Combine-All Merge.
+defect and had already fixed every instance of it, and the corpus carries that fix's
+fingerprint: of its 36 Merge nodes, **23 are `mode: "append"`, 4 are `chooseBranch`,
+9 are left at the default, and not one is in `combine` mode at all.** The mode this
+rule inspects is entirely unused there, so the corpus cannot speak for or against it.
+Its only coverage is therefore the synthetic fixture pair, which is written to
+exercise the exact shape: both branches of a single IF feeding a Combine-All Merge.
+See the zero-firing audit in `docs/calibration.md`.

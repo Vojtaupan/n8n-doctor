@@ -61,8 +61,8 @@ those looked sufficient and were not:
 
 - **Severity cannot tell.** A crash is always downgraded to `info`, so for a rule
   already *declared* `info` a crash and a genuine finding carry the same
-  severity. Two registry rules are `info`, and one of them carries 62% of the
-  suite's output, so this blind spot sat directly underneath the largest number
+  severity. One registry rule is declared `info`, and it carries 49% of the
+  suite's output, so this blind spot sits directly underneath the largest number
   here.
 - **A message marker cannot guarantee.** Keying off the text the engine writes
   works until a rule author's own message happens to start with it, at which
@@ -138,14 +138,14 @@ Measured on 2026-08-27, over the full corpus, with the thresholds above.
 | files unreadable / skipped | 0 |
 | workflows scanned | 479 |
 | nodes scanned | 4,412 |
-| rules run | 19 |
-| findings, total | 474 |
+| rules run | 18 |
+| findings, total | 594 |
 | - `error` | 22 |
-| - `warning` | 160 |
+| - `warning` | 280 |
 | - `info` | 292 |
 | rule crashes | 0 |
 | rules over bound | 0 |
-| rules that never fired | 8 |
+| rules that never fired | 6 |
 | **gate** | **PASS** |
 
 Per rule, sorted by rate:
@@ -153,6 +153,7 @@ Per rule, sorted by rate:
 | rule | severity | findings | rate | workflows | verdict |
 | --- | --- | ---: | ---: | ---: | --- |
 | `http-parallel-unbatched` | info | 292 | 6.618% | 144 | OK |
+| `sheets-user-entered-for-data` | warning | 120 | 2.720% | 62 | OK |
 | `sheets-url-literal-space` | warning | 63 | 1.428% | 39 | OK |
 | `paired-item-lineage-broken` | warning | 54 | 1.224% | 32 | OK |
 | `execute-workflow-passthrough-ignores-mapping` | warning | 33 | 0.748% | 16 | OK |
@@ -168,8 +169,6 @@ Per rule, sorted by rate:
 | `execute-workflow-source-not-database` | warning | 0 | 0.000% | 0 | never fired |
 | `if-v2-missing-left-value` | error | 0 | 0.000% | 0 | never fired |
 | `merge-combine-all-empty-input` | warning | 0 | 0.000% | 0 | never fired |
-| `parallel-ifs-should-be-switch` | info | 0 | 0.000% | 0 | never fired |
-| `sheets-user-entered-for-data` | warning | 0 | 0.000% | 0 | never fired |
 | `switch-options-placement` | error | 0 | 0.000% | 0 | never fired |
 
 The number to look at is the error line. **The entire rule suite produces 22
@@ -250,7 +249,7 @@ overstates the risk:
 ### `http-parallel-unbatched` - info, 292 findings, 6.618%
 
 Not tight, but load-bearing, and worth naming for the opposite reason. It
-produces **62% of everything the tool reports** (292 of 474) across 144 of 479
+produces **49% of everything the tool reports** (292 of 594) across 144 of 479
 workflows. It passes comfortably at `info`, where it has a 2x margin under the
 13.24% bound by construction. It would fail immediately at `warning` (6.618%
 against 5%) and by an order of magnitude at `error`. **Its severity is
@@ -273,18 +272,20 @@ own directory of workflows (`node scripts/calibrate.mjs --corpus <dir>`) and get
 the same table for your own material, which is the check that actually matters to
 you, but the 479/4,412 figures here you have to take on the record of them.
 
-**2. Eight of nineteen rules have no corpus evidence at all.** 42% of the
-registry never fired once on 479 real workflows, and **four of the eight are
-`error` severity** - three are `warning` and one is `info`. Each has passing unit tests against synthetic fixtures, so
-they can fire in principle. What is not established is that they fire on real
-workflows, or that they would be right when they did. A rule with no corpus
-evidence has not passed the bar the other eleven passed - it has only avoided
-being measured. Zero-firing is deliberately not a gate failure, because a silent
-rule cannot be a false-positive problem, but it is also not a pass.
+**2. Six of eighteen rules have no corpus evidence at all.** 33% of the registry
+never fires on 479 real workflows, and **four of the six are `error` severity**;
+the other two are `warning`. Each has passing unit tests against synthetic
+fixtures, so they can fire in principle. What is not established is that they
+fire on real workflows, or that they would be right when they did. A rule with no
+corpus evidence has not passed the bar the other twelve passed - it has only
+avoided being measured. Zero-firing is deliberately not a gate failure, because a
+silent rule cannot be a false-positive problem, but it is also not a pass.
 
-**An audit of those eight is planned and has not been run yet.** Until it has,
-treat the calibration record as covering eleven rules, not nineteen. The eight
-are:
+**These six are what remains after the audit below**, which was run against the
+whole registry's zero-firing set and established, for each one, why it is silent.
+That is weaker than corpus evidence and stronger than nothing: the reason each is
+silent here is now a stated, checkable claim rather than an open question. The
+six are:
 
 | rule | severity |
 | --- | --- |
@@ -294,8 +295,6 @@ are:
 | `switch-options-placement` | error |
 | `execute-workflow-source-not-database` | warning |
 | `merge-combine-all-empty-input` | warning |
-| `sheets-user-entered-for-data` | warning |
-| `parallel-ifs-should-be-switch` | info |
 
 **3. The rate is a floor, not a false-positive rate.** Restating the method
 point, because it is the easiest number here to over-read. A rule scoring 0.453%
@@ -317,6 +316,131 @@ represent every way people build.
 **6. `workflowsAffected` counts distinct workflow names.** Every workflow in this
 corpus has a unique name, so the counts above are exact, but the figure would
 undercount if two workflows shared a name. It is reported, never gated.
+
+---
+
+## The zero-firing audit
+
+Run 2026-08-27, against the eight rules that produced nothing on the corpus at
+the time. A rule that never fires has its fixtures as its only evidence, and a
+fixture proves only that the rule matches a shape its own author wrote. So each
+of the eight was put through the same three steps: read what n8n defect it
+claims to catch, write a **synthetic** fixture reproducing that defect and check
+the rule actually fires on it, then measure the corpus to establish *why* it is
+silent - the pattern is genuinely absent, or the rule could not have caught it if
+it were there.
+
+The two explanations have opposite consequences, and the corpus separates them.
+For each rule below, the deciding measurement is quoted.
+
+| rule | severity | outcome | why |
+| --- | --- | --- | --- |
+| `sheets-user-entered-for-data` | warning | **fix** | Matched only `valueInputOption`, and only as a parameter key - a combination n8n never emits. It was blind to 120 real occurrences of the defect it describes. |
+| `execute-workflow-input-dropped` | error | **fix** | Handled only the JSON-example way a sub-workflow declares its inputs. The field-list way whitelists identically, is n8n's default, and is the only one this corpus uses. |
+| `parallel-ifs-should-be-switch` | info | **cut** | Required four parallel IFs on one output; the corpus maximum is one, across 3,971 outputs. It also counted IFs as a proxy for a harm it never checked. |
+| `switch-options-placement` | error | **keep** | The defect breaks workflow *activation*, so a corpus of running workflows cannot contain it. None of its 35 Switch nodes nest `options` inside `rules`. |
+| `if-v2-missing-left-value` | error | **keep** | The corpus validates the rule's version gate: 212 of 212 IF nodes at typeVersion 2.2+ carry the key; the 26 that lack it are all at 2.0, where it is not required. |
+| `execute-workflow-missing-mapping-mode` | error | **keep** | n8n rejects the node at creation, so the defect never survives into an export. All 71 `workflowInputs` objects carry the key. |
+| `merge-combine-all-empty-input` | warning | **keep** | The defect was hit in production, then eradicated by moving to `mode: "append"`. The corpus's 23 `append` merges and zero `combine` merges are that fix's fingerprint. |
+| `execute-workflow-source-not-database` | warning | **keep** | The field is present and inspected on 48 nodes and correctly cleared on all 48; a non-database source is a deliberate, rare choice absent from this corpus. |
+
+Three of these deserve their measurements written out, because they are the ones
+where the outcome turned on the number.
+
+### `sheets-user-entered-for-data` - the rule could not have fired
+
+This rule looks for a Google Sheets write configured `USER_ENTERED`, which makes
+Sheets re-parse every value as if it had been typed: phone numbers beginning `+`
+or `-` evaluate as arithmetic, ISO timestamps coerce to Sheets dates that no
+longer round-trip, leading zeros vanish.
+
+It searched for the parameter **key** `valueInputOption`. That key appears **zero
+times in 4,412 nodes**, and could not have appeared, for two independent reasons:
+
+- The n8n Google Sheets node does not use the Google API's field name. It calls
+  the option `cellFormat` or `valueInputMode`. Those carry `USER_ENTERED` on
+  **20** nodes.
+- Calling the Sheets API directly from an HTTP Request node *does* use
+  `valueInputOption` - but inside the URL query string or a JSON body, where it
+  is part of a **string value** and never a parameter key. **100** nodes carry it
+  that way.
+
+So a rule written from a real, documented data-corruption bug was structurally
+incapable of reporting it, and its one fixture passed only because the fixture
+had been written in the same wrong shape as the matcher. That is the failure mode
+a zero-firing rule is most likely to be hiding, and it is why this audit checks
+fixtures against the platform rather than against the rule.
+
+Fixed to match all three names, as a key or as an assignment inside a string. It
+now reports **120 findings across 62 workflows, 2.720%** - inside the 5% warning
+bound with 1.8x of room. The match deliberately requires the option name and
+`USER_ENTERED` **together**: a further **187** nodes pair the same option with
+`RAW`, which is the correct choice and stays silent, and **12** nodes mention
+`USER_ENTERED` without configuring it, which also stay silent.
+
+### `execute-workflow-input-dropped` - right defect, wrong half of it
+
+A sub-workflow's trigger whitelists its inputs, and anything the parent maps that
+the child does not declare is discarded at runtime with no error. The trigger
+declares inputs two ways: a pasted JSON example, or an explicit field list. Both
+whitelist identically. The field list is n8n's **default**.
+
+The rule handled only the JSON example. In the corpus, of 98 parent-child links
+that resolve to a loaded child, the child declares its inputs by **field list 14
+times and by JSON example zero times** (76 are passthrough, which is a different
+rule's defect, and 8 declare nothing). An `error`-severity rule was inspecting
+none of the places its defect could occur.
+
+Extended to the field-list mode, including the default case where `inputSource`
+is omitted. It still reports **zero** findings: of those 14 links, 13 have a
+parent mapping to compare against and all 13 are clean. That was measured before
+the change and confirmed after it, so this closes a coverage hole rather than
+producing evidence. It also now skips parents
+on `autoMapInputData`, where the mapping is inert UI state and comparing it would
+accuse a mapping n8n never applies.
+
+### `parallel-ifs-should-be-switch` - cut
+
+The rule fired when one output fanned out to four or more IF nodes, on the theory
+that this is multi-way dispatch built by hand, and that a webhook answering with
+`responseMode: "lastNode"` then returns whichever branch finished last. The
+underlying trap is real and was observed in production.
+
+It was cut anyway, on three counts:
+
+- **The shape is not near-missing, it is absent.** Across **3,971** node outputs
+  in the corpus, the maximum number of IF nodes on any single output is **one**.
+  Not one output reaches even two, against a threshold of four.
+- **It did not check the mechanism it described.** The harm comes from the
+  non-matching IFs' *false* outputs being wired onward under last-node response
+  semantics. The rule inspected neither the false outputs nor the response mode,
+  so it would fire on a correct four-way dispatch whose false outputs are dead
+  ends - and tell that author their caller may receive the wrong branch.
+- **It was the registry's only `info` rule of the eight**, the least actionable
+  tier, so it carried the lowest value against that inaccuracy.
+
+Cutting it takes the registry from 19 rules to 18. That is the point: 18 rules
+each of which has either corpus evidence or a stated reason for having none is a
+better number than 19 with an unexamined tail.
+
+### What this changed in the numbers
+
+| | before | after |
+| --- | ---: | ---: |
+| rules in the registry | 19 | 18 |
+| rules with corpus evidence | 11 | 12 |
+| rules that never fired | 8 | 6 |
+| findings, total | 474 | 594 |
+| - `error` | 22 | 22 |
+| - `warning` | 160 | 280 |
+| - `info` | 292 | 292 |
+| gate | PASS | PASS |
+
+Every one of those moves comes from the `sheets-user-entered-for-data` fix, which
+added 120 warnings, and from the cut, which removed a rule contributing nothing.
+**No error-severity count moved**, so the headline claim - 22 error findings
+across 479 production workflows - is unchanged, and so is the margin on the rule
+that sits closest to its bound.
 
 ---
 

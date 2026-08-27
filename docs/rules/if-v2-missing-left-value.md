@@ -87,3 +87,12 @@ the editor was rejected by n8n's creation API with an error that pointed at the
 conditions block but not at the missing key. Every condition already had a
 `leftValue`, which sent the debugging in the wrong direction. The fix was to add
 a single empty `leftValue` to `conditions.options`.
+
+This rule reports **zero** findings on the 479-workflow calibration corpus, but
+that corpus validates its version gate rather than leaving it unexamined: of the
+254 IF nodes there, **all 212 at typeVersion 2.2 or 2.3 carry
+`conditions.options.leftValue`**, while 26 of the 42 at typeVersion 2.0 - where
+it is not required - do not. n8n's own serializer emits the key at 2.2+, so an
+exported workflow structurally cannot contain the defect; a hand-assembled or
+agent-generated one can, and is rejected on creation. See the zero-firing audit
+in `docs/calibration.md`.

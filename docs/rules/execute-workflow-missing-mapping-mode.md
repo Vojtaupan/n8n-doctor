@@ -76,3 +76,10 @@ assembled outside the editor refused to be created through the API. The failure
 was silent — the returned workflow simply did not contain the node — which sent
 the debugging toward permissions and IDs before the missing `mappingMode` key
 turned out to be the cause. Adding it fixed creation immediately.
+
+This rule reports **zero** findings on the 479-workflow calibration corpus,
+because n8n rejects the node at creation time - so the defect never survives into
+an export. All 71 `workflowInputs` objects in that corpus carry `mappingMode`
+(63 `defineBelow`, 8 `autoMapInputData`). Like the other creation-time rules
+here, its audience is JSON on its way to the API, not JSON that came back from
+it. See the zero-firing audit in `docs/calibration.md`.

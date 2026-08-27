@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Parent - Shipment Intake",
+    "nodes": [
+      {
+        "name": "Execute Sub-Workflow",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "parameters": {
+          "source": "database",
+          "workflowId": { "value": "child-fields-2", "mode": "id" },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "shipmentId": "={{ $json.shipmentId }}",
+              "carrier": "={{ $json.carrier }}"
+            },
+            "schema": []
+          }
+        }
+      }
+    ],
+    "connections": {}
+  },
+  {
+    "id": "child-fields-2",
+    "name": "Child - Notify Carrier",
+    "nodes": [
+      {
+        "name": "When Executed by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "parameters": {
+          "workflowInputs": {
+            "values": [{ "name": "shipmentId", "type": "string" }]
+          }
+        }
+      }
+    ],
+    "connections": {}
+  }
+]
