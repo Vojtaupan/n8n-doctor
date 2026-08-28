@@ -26,17 +26,16 @@ describe('execute-workflow-input-dropped', () => {
   // `inputSource` is omitted when the trigger is left on its default, so an
   // absent key with a field list present is the same declaring mode.
   it('fires when the field list is present and inputSource is left at its default', () => {
-    const found = runRules(
-      loadFixture('execute-workflow-input-dropped.fields-default-bad'),
-      [rule],
-    );
+    const found = runRules(loadFixture('execute-workflow-input-dropped.fields-default-bad'), [
+      rule,
+    ]);
     expect(found).toHaveLength(1);
   });
 
   it('stays silent when the field list declares every mapped key', () => {
-    expect(runRules(loadFixture('execute-workflow-input-dropped.fields-good'), [rule])).toHaveLength(
-      0,
-    );
+    expect(
+      runRules(loadFixture('execute-workflow-input-dropped.fields-good'), [rule]),
+    ).toHaveLength(0);
   });
 
   // Under `autoMapInputData` the parent passes the incoming item through and the

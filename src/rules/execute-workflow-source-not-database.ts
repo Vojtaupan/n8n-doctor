@@ -19,7 +19,8 @@ import type { Rule, Finding } from '../types.js';
 export const rule: Rule = {
   id: 'execute-workflow-source-not-database',
   severity: 'warning',
-  title: 'Execute Workflow: load the sub-workflow from the database, not a file, URL, or inline copy',
+  title:
+    'Execute Workflow: load the sub-workflow from the database, not a file, URL, or inline copy',
   docs: 'docs/rules/execute-workflow-source-not-database.md',
 
   check(graph) {

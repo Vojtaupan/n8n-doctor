@@ -19,10 +19,7 @@ describe('http-json-body-inline-expression', () => {
   // working code. A value starting with '=' is a TEMPLATE with holes, not a single
   // expression, so quoted interpolation is correct and must stay silent.
   it('stays silent when every interpolation sits inside a JSON string', () => {
-    const found = runRules(
-      loadFixture('http-json-body-inline-expression.quoted-safe'),
-      [rule],
-    );
+    const found = runRules(loadFixture('http-json-body-inline-expression.quoted-safe'), [rule]);
     expect(found).toHaveLength(0);
   });
 
@@ -32,10 +29,7 @@ describe('http-json-body-inline-expression', () => {
   // Flagging it meant the rule reported the fix as the defect: 85 of 88 corpus
   // findings were this pattern.
   it('stays silent when the spliced expression is already JSON.stringify()', () => {
-    const found = runRules(
-      loadFixture('http-json-body-inline-expression.stringified'),
-      [rule],
-    );
+    const found = runRules(loadFixture('http-json-body-inline-expression.stringified'), [rule]);
     expect(found).toHaveLength(0);
   });
 });

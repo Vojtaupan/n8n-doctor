@@ -80,7 +80,10 @@ function parseArgs(argv: string[]): { opts: Options; error?: string } {
     } else if (arg === '--severity' || arg.startsWith('--severity=')) {
       const val = arg.includes('=') ? arg.slice('--severity='.length) : argv[++i];
       if (val !== 'error' && val !== 'warning' && val !== 'info') {
-        return { opts, error: `invalid --severity "${val ?? ''}" (expected error, warning, or info)` };
+        return {
+          opts,
+          error: `invalid --severity "${val ?? ''}" (expected error, warning, or info)`,
+        };
       }
       opts.severity = val;
     } else if (arg === '--rule' || arg.startsWith('--rule=')) {
@@ -177,12 +180,14 @@ export async function run(argv: string[]): Promise<CliResult> {
 
   // Nothing parsed at all: the input was unreadable, not clean. Exit 2.
   if (raws.length === 0) {
-    const detail = errors.length > 0 ? errors.join('\n') : 'no readable workflows in the given paths';
+    const detail =
+      errors.length > 0 ? errors.join('\n') : 'no readable workflows in the given paths';
     return { code: 2, stdout: '', stderr: `n8n-lint: ${detail}\n` };
   }
 
   const ctx = buildContext(raws.map(buildGraph));
-  const selected = opts.ruleIds.length > 0 ? allRules.filter((r) => opts.ruleIds.includes(r.id)) : allRules;
+  const selected =
+    opts.ruleIds.length > 0 ? allRules.filter((r) => opts.ruleIds.includes(r.id)) : allRules;
   const threshold = RANK[opts.severity];
   const findings = runRules(ctx, selected).filter((f) => RANK[f.severity] >= threshold);
 

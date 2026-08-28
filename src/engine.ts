@@ -70,7 +70,8 @@ export function runRules(ctx: Context, rules: Rule[] = defaultRules): Finding[] 
           severity: 'info',
           workflowName: graph.name,
           message: `${RULE_CRASH_PREFIX}${(err as Error).message ?? String(err)}`,
-          suggestion: 'Check the rule implementation or the workflow JSON for unexpected structure.',
+          suggestion:
+            'Check the rule implementation or the workflow JSON for unexpected structure.',
           crashed: true,
         });
         continue;

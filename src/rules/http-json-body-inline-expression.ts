@@ -48,8 +48,7 @@ export const rule: Rule = {
       if (unquoted.length === 0) continue;
 
       const sample = unquoted[0]!;
-      const count =
-        unquoted.length === 1 ? 'an expression' : `${unquoted.length} expressions`;
+      const count = unquoted.length === 1 ? 'an expression' : `${unquoted.length} expressions`;
 
       findings.push({
         nodeName: node.name,

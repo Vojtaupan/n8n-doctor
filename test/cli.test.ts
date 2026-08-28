@@ -25,10 +25,7 @@ describe('cli', () => {
   });
 
   it('emits parseable JSON under --json', async () => {
-    const { stdout } = await runCli([
-      'test/fixtures/set-include-other-fields.bad.json',
-      '--json',
-    ]);
+    const { stdout } = await runCli(['test/fixtures/set-include-other-fields.bad.json', '--json']);
     expect(() => JSON.parse(stdout)).not.toThrow();
   });
 

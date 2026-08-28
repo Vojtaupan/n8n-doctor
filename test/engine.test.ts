@@ -18,11 +18,12 @@ describe('engine', () => {
 
   it('orders findings error before warning before info', () => {
     const findings = [
-      { severity: 'info' }, { severity: 'error' }, { severity: 'warning' },
+      { severity: 'info' },
+      { severity: 'error' },
+      { severity: 'warning' },
     ] as never[];
     // orderBySeverity is exported from engine.ts
-    expect(orderBySeverity(findings).map((f) => f.severity))
-      .toEqual(['error', 'warning', 'info']);
+    expect(orderBySeverity(findings).map((f) => f.severity)).toEqual(['error', 'warning', 'info']);
   });
 });
 

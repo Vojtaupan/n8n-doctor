@@ -3,10 +3,7 @@ import { parseWorkflow, parseWorkflowFileContents } from '../src/load.js';
 
 describe('parseWorkflow', () => {
   it('parses a UI-download export with no active flag', () => {
-    const wf = parseWorkflow(
-      { name: 'Bare', nodes: [], connections: {} },
-      'ui.json',
-    );
+    const wf = parseWorkflow({ name: 'Bare', nodes: [], connections: {} }, 'ui.json');
     expect(wf.name).toBe('Bare');
     expect(wf.active).toBe(false);
     expect(wf.pinData).toEqual({});
@@ -22,9 +19,7 @@ describe('parseWorkflow', () => {
   });
 
   it('rejects JSON that is not a workflow', () => {
-    expect(() => parseWorkflow({ foo: 'bar' }, 'junk.json')).toThrow(
-      /not an n8n workflow/i,
-    );
+    expect(() => parseWorkflow({ foo: 'bar' }, 'junk.json')).toThrow(/not an n8n workflow/i);
   });
 
   it('parses a CLI export array into many workflows', () => {

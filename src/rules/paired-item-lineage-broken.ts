@@ -32,7 +32,8 @@ const MAP_CALL = /\.\s*map\s*\(/;
 export const rule: Rule = {
   id: 'paired-item-lineage-broken',
   severity: 'warning',
-  title: "Expression reads $('Code').item where the Code node maps items, breaking paired-item lineage",
+  title:
+    "Expression reads $('Code').item where the Code node maps items, breaking paired-item lineage",
   docs: 'docs/rules/paired-item-lineage-broken.md',
 
   check(graph) {
@@ -60,7 +61,9 @@ export const rule: Rule = {
         nodeName: node.name,
         message:
           `"${node.name}" reads ${list} via $('…').item, but ${
-            plural ? 'those are Code nodes whose jsCode calls' : 'that is a Code node whose jsCode calls'
+            plural
+              ? 'those are Code nodes whose jsCode calls'
+              : 'that is a Code node whose jsCode calls'
           } .map(). A .map() rebuilds items without paired-item metadata, so the lineage that ` +
           `.item depends on is severed — n8n cannot trace the current item back to the mapped ` +
           `node and throws "ExpressionError: Can't get data for expression" at runtime, even ` +

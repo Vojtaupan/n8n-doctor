@@ -10,6 +10,8 @@ describe('execute-workflow-missing-mapping-mode', () => {
     expect(found[0]!.suggestion).toBeTruthy();
   });
   it('stays silent on the good fixture', () => {
-    expect(runRules(loadFixture('execute-workflow-missing-mapping-mode.good'), [rule])).toHaveLength(0);
+    expect(
+      runRules(loadFixture('execute-workflow-missing-mapping-mode.good'), [rule]),
+    ).toHaveLength(0);
   });
 });

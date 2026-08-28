@@ -287,7 +287,11 @@ describe('aggregateStats', () => {
   });
 
   it('gives every rule the same nodesInspected denominator', () => {
-    const stats = aggregateStats([finding({ ruleId: 'an-error', severity: 'error' })], registry, 4412);
+    const stats = aggregateStats(
+      [finding({ ruleId: 'an-error', severity: 'error' })],
+      registry,
+      4412,
+    );
     expect(stats.every((s) => s.nodesInspected === 4412)).toBe(true);
   });
 

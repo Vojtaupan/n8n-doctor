@@ -22,7 +22,8 @@ const BRANCHING_TYPES = new Set(['if', 'switch']);
 export const rule: Rule = {
   id: 'merge-combine-all-empty-input',
   severity: 'warning',
-  title: 'Merge (Combine All): a conditional-branch input can empty the cross-product to zero items',
+  title:
+    'Merge (Combine All): a conditional-branch input can empty the cross-product to zero items',
   docs: 'docs/rules/merge-combine-all-empty-input.md',
 
   check(graph) {
