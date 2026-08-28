@@ -60,7 +60,7 @@ does need a separate judgement about whether it is dead weight.
 ## Result
 
 ```
-n8n-lint calibration
+n8n-doctor calibration
 ====================
 
 files scanned:     479

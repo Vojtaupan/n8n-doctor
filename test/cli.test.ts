@@ -48,6 +48,6 @@ describe('cli', () => {
   it('prints usage under --help and exits 0', async () => {
     const { code, stdout } = await runCli(['--help']);
     expect(code).toBe(0);
-    expect(stdout).toMatch(/n8n-lint/);
+    expect(stdout).toMatch(/n8n-doctor/);
   });
 });

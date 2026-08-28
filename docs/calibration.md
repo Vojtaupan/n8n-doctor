@@ -1,6 +1,6 @@
 # Calibration
 
-n8n-lint's claim is not that it finds more than the other n8n linters. It is that
+n8n-doctor's claim is not that it finds more than the other n8n linters. It is that
 what it reports is worth reading: run it on a directory of real, working,
 in-production workflows and it does not bury you in false positives. This
 document is the evidence for that claim, and the record of the gate that keeps it

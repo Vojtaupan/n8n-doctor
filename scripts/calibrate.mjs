@@ -146,7 +146,7 @@ async function main() {
   const zeroFiring = verdicts.filter((v) => v.reason === 'zero-firing');
 
   const out = [
-    'n8n-lint calibration',
+    'n8n-doctor calibration',
     '====================',
     '',
     `files scanned:     ${files}${skipped > 0 ? ` (${skipped} unreadable, skipped)` : ''}`,

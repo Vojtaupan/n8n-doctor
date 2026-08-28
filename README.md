@@ -1,4 +1,4 @@
-# n8n-lint
+# n8n-doctor
 
 Lint exported n8n workflow JSON for production-readiness defects that schema
 validators cannot see.
@@ -26,9 +26,9 @@ This is a linter for that layer.
 ## What it does
 
 ```
-npx n8n-lint path/to/workflow.json      # one file
-npx n8n-lint ./workflows                # a directory, recursively
-cat workflow.json | npx n8n-lint -      # stdin
+npx n8n-doctor path/to/workflow.json      # one file
+npx n8n-doctor ./workflows                # a directory, recursively
+cat workflow.json | npx n8n-doctor -      # stdin
 ```
 
 Static analysis only: no execution, no network, no model calls, deterministic
@@ -39,7 +39,7 @@ nothing you have to do depends on which one you used.
 A real run, against a small sample workflow:
 
 ```
-$ npx n8n-lint nightly-export.json
+$ npx n8n-doctor nightly-export.json
 Nightly Export
   error   set-include-other-fields  Shape Payload — "includeOtherFields" is nested under parameters.options instead of the parameters root. n8n silently ignores the misplaced flag and drops all upstream fields downstream.
           ↳ Move "includeOtherFields" to the parameters root (e.g. "parameters": { "includeOtherFields": true, "options": {}, ... }). Placing it anywhere other than the parameters root causes it to be silently ignored.
@@ -289,7 +289,7 @@ name: lint n8n workflows
 on: [push, pull_request]
 
 jobs:
-  n8n-lint:
+  n8n-doctor:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -297,7 +297,7 @@ jobs:
         with:
           node-version: 20
       # Fails the job on any error-severity finding; exits 2 if ./workflows is empty.
-      - run: npx n8n-lint ./workflows --severity error
+      - run: npx n8n-doctor ./workflows --severity error
 ```
 
 Drop `--severity error` to see warnings and advisories in the log without failing

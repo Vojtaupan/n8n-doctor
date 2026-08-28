@@ -2,7 +2,7 @@
 #
 # Publish gate.
 #
-# n8n-lint is cut from a private business vault into a public, MIT-licensed
+# n8n-doctor is cut from a private business vault into a public, MIT-licensed
 # repo. Nothing that identifies that vault, the business it belongs to, or a
 # real credential may enter the tracked tree. This script runs `git grep`
 # over the tracked tree for patterns that must never appear and fails the

@@ -11,7 +11,7 @@ production-readiness defects that schema validators cannot see.
 
 ### Added
 
-- **CLI** - `n8n-lint <path...>`, taking files, directories, globs, or `-` for
+- **CLI** - `n8n-doctor <path...>`, taking files, directories, globs, or `-` for
   stdin, and reading all three n8n export shapes (UI download, public-API
   response, `n8n export:workflow` array). Flags: `--severity`, `--rule`,
   `--json`, `--quiet`, `--no-color`, `--help`. Static analysis only: no

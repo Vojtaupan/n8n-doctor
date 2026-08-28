@@ -29,7 +29,7 @@ interface Options {
   help: boolean;
 }
 
-const USAGE = `Usage: n8n-lint <path...> [options]
+const USAGE = `Usage: n8n-doctor <path...> [options]
 
   Lint exported n8n workflow JSON for production-readiness defects that
   schema validators cannot see.
@@ -138,9 +138,9 @@ export async function run(argv: string[]): Promise<CliResult> {
   const { opts, error } = parseArgs(argv);
 
   if (opts.help) return { code: 0, stdout: USAGE, stderr: '' };
-  if (error) return { code: 2, stdout: '', stderr: `n8n-lint: ${error}\n\n${USAGE}` };
+  if (error) return { code: 2, stdout: '', stderr: `n8n-doctor: ${error}\n\n${USAGE}` };
   if (opts.paths.length === 0) {
-    return { code: 2, stdout: '', stderr: `n8n-lint: no input paths given\n\n${USAGE}` };
+    return { code: 2, stdout: '', stderr: `n8n-doctor: no input paths given\n\n${USAGE}` };
   }
 
   const wantStdin = opts.paths.includes('-');
@@ -148,7 +148,11 @@ export async function run(argv: string[]): Promise<CliResult> {
   const files = await expand(fileArgs);
 
   if (!wantStdin && files.length === 0) {
-    return { code: 2, stdout: '', stderr: `n8n-lint: no workflow files matched the given paths\n` };
+    return {
+      code: 2,
+      stdout: '',
+      stderr: `n8n-doctor: no workflow files matched the given paths\n`,
+    };
   }
 
   const raws: RawWorkflow[] = [];
@@ -182,7 +186,7 @@ export async function run(argv: string[]): Promise<CliResult> {
   if (raws.length === 0) {
     const detail =
       errors.length > 0 ? errors.join('\n') : 'no readable workflows in the given paths';
-    return { code: 2, stdout: '', stderr: `n8n-lint: ${detail}\n` };
+    return { code: 2, stdout: '', stderr: `n8n-doctor: ${detail}\n` };
   }
 
   const ctx = buildContext(raws.map(buildGraph));
@@ -200,7 +204,7 @@ export async function run(argv: string[]): Promise<CliResult> {
 
   // Report but do not fail on individual bad files — one unreadable file in a
   // glob of hundreds should not mask the findings from the rest.
-  const stderr = errors.length > 0 ? `${errors.map((e) => `n8n-lint: ${e}`).join('\n')}\n` : '';
+  const stderr = errors.length > 0 ? `${errors.map((e) => `n8n-doctor: ${e}`).join('\n')}\n` : '';
   const code = findings.some((f) => f.severity === 'error') ? 1 : 0;
 
   return { code, stdout, stderr };

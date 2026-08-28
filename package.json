@@ -1,19 +1,19 @@
 {
-  "name": "n8n-lint",
+  "name": "n8n-doctor",
   "version": "0.1.0",
   "description": "Lint n8n workflows for production-readiness defects that schema validators miss",
   "type": "module",
   "author": "Vojtech Hradil",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Vojtaupan/n8n-lint.git"
+    "url": "git+https://github.com/Vojtaupan/n8n-doctor.git"
   },
   "bugs": {
-    "url": "https://github.com/Vojtaupan/n8n-lint/issues"
+    "url": "https://github.com/Vojtaupan/n8n-doctor/issues"
   },
-  "homepage": "https://github.com/Vojtaupan/n8n-lint#readme",
+  "homepage": "https://github.com/Vojtaupan/n8n-doctor#readme",
   "bin": {
-    "n8n-lint": "./dist/cli.js"
+    "n8n-doctor": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

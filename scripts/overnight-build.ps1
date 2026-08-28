@@ -123,7 +123,7 @@ Hard rules:
   - Make best-judgment decisions per the plan. Do NOT ask questions - nobody is there to answer.
 '@
 $prompt = $promptTemplate.Replace('__BRANCH__', $branch).Replace('__PLAN__', $plan)
-$promptFile = Join-Path $env:TEMP 'n8n-lint-prompt.txt'
+$promptFile = Join-Path $env:TEMP 'n8n-doctor-prompt.txt'
 Set-Content -Path $promptFile -Value $prompt -Encoding utf8
 Write-Log "prompt written to $promptFile ($(($prompt -split "`n").Count) lines)"
 
@@ -168,7 +168,7 @@ while ($true) {
   Set-Content -Path $status -Value "RUNNING iteration $iter, $remaining steps left" -Encoding utf8
 
   $before = (& git rev-parse HEAD)
-  $iterOut = Join-Path $env:TEMP 'n8n-lint-iteration.txt'
+  $iterOut = Join-Path $env:TEMP 'n8n-doctor-iteration.txt'
   Get-Content $promptFile -Raw | & $claude -p --model opus --dangerously-skip-permissions *> $iterOut
   $code = $LASTEXITCODE
   if (Test-Path $iterOut) { Get-Content $iterOut | Add-Content -Path $log }
