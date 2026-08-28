@@ -150,6 +150,9 @@ because the n8n node uses a different name and the API path carries it inside a
 string rather than as a key. It reported nothing on the entire corpus while 131
 nodes were configured exactly as described above. A follow-up review found the
 repaired matcher still allowed only double quotes, missing every option written
-in an expression - the dominant form. All 131 findings were then checked by hand
-against the corpus: **zero false positives, and not one of them stores a
-formula.** See the zero-firing audit in `docs/calibration.md`.
+in an expression - the dominant form. The 120 findings from before that quote
+fix were then checked by hand against the corpus: **zero false positives, and
+not one of them stores a formula.** The quote fix added 11 more (6 HTTP Request
+nodes building the same call in an expression, 5 Code nodes assembling the batch
+payload), bringing the total to 131. See the zero-firing audit in
+`docs/calibration.md`.

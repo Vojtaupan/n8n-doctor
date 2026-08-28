@@ -16,3 +16,6 @@ build-status.txt
 
 # Planning/spec scratch from the SDD workflow - not part of the package.
 .superpowers/
+
+# Internal work order naming the owner personally - never public.
+HANDOFF.md

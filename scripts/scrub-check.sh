@@ -30,8 +30,9 @@ report() {
 FORBIDDEN_PATTERNS=(
   'sk-ant-[A-Za-z0-9_-]+'    # an Anthropic API key
   'BEGIN [A-Z ]*PRIVATE KEY' # any PEM private-key header
-  'AI OS_second brain'       # the private vault this repo was cut from
-  'bolteniq'                 # the business this repo was cut from
+  # The next two are strings from the private repo this was extracted from.
+  'AI OS_second brain'
+  'bolteniq'
 )
 
 # Deliberately NOT in this list: em dashes. README.md's sample CLI-output
