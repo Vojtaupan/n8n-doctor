@@ -4,7 +4,17 @@
   "description": "Lint n8n workflows for production-readiness defects that schema validators miss",
   "type": "module",
   "author": "Vojtech Hradil",
-  "bin": { "n8n-lint": "./dist/cli.js" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vojtaupan/n8n-lint.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Vojtaupan/n8n-lint/issues"
+  },
+  "homepage": "https://github.com/Vojtaupan/n8n-lint#readme",
+  "bin": {
+    "n8n-lint": "./dist/cli.js"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
@@ -16,7 +26,9 @@
     "LICENSE",
     "CHANGELOG.md"
   ],
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup src/cli.ts src/index.ts src/calibrate.ts --format esm --dts --clean",
     "test": "vitest run",
@@ -28,9 +40,19 @@
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
     "scrub": "bash scripts/scrub-check.sh"
   },
-  "keywords": ["n8n", "lint", "workflow", "automation", "static-analysis", "ci"],
+  "keywords": [
+    "n8n",
+    "lint",
+    "workflow",
+    "automation",
+    "static-analysis",
+    "ci"
+  ],
   "license": "MIT",
-  "dependencies": { "fast-glob": "^3.3.2", "picocolors": "^1.0.1" },
+  "dependencies": {
+    "fast-glob": "^3.3.2",
+    "picocolors": "^1.0.1"
+  },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
