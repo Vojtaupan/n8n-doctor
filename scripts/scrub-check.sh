@@ -34,6 +34,14 @@ FORBIDDEN_PATTERNS=(
   'bolteniq'                 # the business this repo was cut from
 )
 
+# Deliberately NOT in this list: em dashes. README.md's sample CLI-output
+# block legitimately contains them - the reporter emits
+# "${f.nodeName} — " as its own finding separator (src/report/text.ts:56)
+# - so a naive scan for the character would flag that correct file forever
+# and invite someone to "fix" a working reporter into something wrong.
+# This is a considered omission, not an oversight; see HANDOFF.md for the
+# fuller rationale.
+
 for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
   hits=$(git grep -n -I -E -i -e "$pattern" -- . ":!$SELF" 2>/dev/null || true)
   if [ -n "$hits" ]; then
