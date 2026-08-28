@@ -75,7 +75,7 @@ Requires Node 20 or newer. Two runtime dependencies (`fast-glob`, `picocolors`).
 
 ## Calibration
 
-There are already a dozen or so open-source n8n linters, and none of them has
+There are already a dozen or so open-source n8n linters, and none appears to have
 meaningful adoption. The plausible reason is that a linter which opens with
 hundreds of findings on a workflow that has been running fine for a year teaches
 you, in one run, that its output is not worth reading.
@@ -166,8 +166,8 @@ the `error` rate bound by more than sevenfold and breaches the absolute cap by
 more than 6.5x, and both failures are pinned by unit tests so the gate cannot
 regress back to permitting it.
 
-Rules have been narrowed and cut to meet these bounds. One was cut outright,
-taking the registry from 19 to 18.
+Rules have been narrowed to meet these bounds, and one was cut outright by the
+zero-firing audit, taking the registry from 19 to 18.
 
 ### The rule that could not fire
 
@@ -187,7 +187,7 @@ other and neither agreed with n8n.
 
 Fixed, it reports **131 findings across 66 workflows**. The 120 it produced
 before the final quote fix were then checked exhaustively against the corpus: all
-120 are true positives. **Measured false positives: zero.**
+120 are true positives. Measured false positives in that sample: zero.
 
 That is the argument for auditing zero-firing rules, and it is why the audit
 checks fixtures against the platform rather than against the rule.

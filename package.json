@@ -6,7 +6,7 @@
   "bin": { "n8n-lint": "./dist/cli.js" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "docs/rules", "README.md", "LICENSE"],
+  "files": ["dist", "docs/rules", "docs/calibration.md", "README.md", "LICENSE", "CHANGELOG.md"],
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "tsup src/cli.ts src/index.ts src/calibrate.ts --format esm --dts --clean",
@@ -15,7 +15,8 @@
     "lint": "eslint src test --ext .ts --no-error-on-unmatched-pattern",
     "typecheck": "tsc --noEmit",
     "calibrate": "npm run build && node scripts/calibrate.mjs",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "scrub": "bash scripts/scrub-check.sh"
   },
   "keywords": ["n8n", "lint", "workflow", "automation", "static-analysis", "ci"],
   "license": "MIT",

@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  check:
+    name: check (${{ matrix.os }}, node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [20, 22, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - run: npm ci
+
+      - run: npm run check
+
+  scrub:
+    name: scrub
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # scrub-check.sh runs `git grep` over the tracked tree; give it full
+          # history rather than a shallow clone so that has no surprises.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - run: npm run scrub
+
+  # Deliberately NOT a CI job: `npm run calibrate`.
+  #
+  # Calibration runs the linter against ./corpus - 479 real, gitignored
+  # production workflows that are a client's private data (see .gitignore
+  # and docs/calibration.md). That directory exists only on the machine it
+  # was pulled to by scripts/pull-corpus.mjs; it is never committed and will
+  # never exist on a GitHub Actions runner. There is no way to "fix" this by
+  # adding a calibrate job here - do not add one. Calibration stays a local,
+  # manual gate (`npm run calibrate`) run before a release, not a CI job.
