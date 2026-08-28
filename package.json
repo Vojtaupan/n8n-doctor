@@ -21,7 +21,7 @@
     "dist",
     "docs/rules",
     "docs/calibration.md",
-    "docs/plans",
+    "docs/plans/v1.1-backlog.md",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
