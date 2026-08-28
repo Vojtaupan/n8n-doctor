@@ -1,0 +1,13 @@
+# Force LF in the working tree on every platform.
+#
+# Without this, a Windows checkout with the default core.autocrlf=true converts
+# every file to CRLF, and two things break that pass everywhere else:
+#   - prettier (endOfLine: "lf") flags all 53 source files as unformatted
+#   - bash refuses scripts/scrub-check.sh with a "\r: command not found" error
+# Both were observed on windows-latest in this repo's first CI run.
+* text=auto eol=lf
+
+# Binary-ish files git should never touch.
+*.png binary
+*.jpg binary
+*.gz  binary
